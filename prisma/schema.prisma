@@ -1,0 +1,197 @@
+// Prisma schema — PostgreSQL (Phase 2)
+// Provider: postgresql, 10-status workflow, optimistic locking, full indexes
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ── Enums ──────────────────────────────────────────
+
+enum Role {
+  USER
+  TECH
+  ADMIN
+}
+
+enum TicketStatus {
+  NEW
+  TRIAGED
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_REQUESTER
+  WAITING_PARTS
+  RESOLVED
+  CLOSED
+  REOPENED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum AssetStatus {
+  ACTIVE
+  IN_REPAIR
+  RETIRED
+  LOST
+}
+
+// ── Tables ─────────────────────────────────────────
+
+model User {
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  password   String // bcrypt hash
+  role       Role     @default(USER)
+  department String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  requested_tickets Ticket[]        @relation("Requester")
+  assigned_tickets  Ticket[]        @relation("Technician")
+  history_entries   TicketHistory[]
+  attachments       Attachment[]
+  activity_logs     ActivityLog[]
+}
+
+model Asset {
+  id            String      @id @default(cuid())
+  asset_code    String      @unique
+  name          String
+  category      String
+  serial_number String      @unique
+  tags          String[]    @default([])
+  location      String?
+  brand         String?
+  model         String?
+  department    String?
+  owner         String?
+  purchase_date DateTime?
+  warranty      String?
+  status        AssetStatus @default(ACTIVE)
+  notes         String?
+  version       Int         @default(1)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+
+  tickets Ticket[]
+}
+
+model Ticket {
+  id            String       @id @default(cuid())
+  ticket_no     String       @unique
+  title         String
+  description   String
+  category      String
+  priority      Priority     @default(MEDIUM)
+  status        TicketStatus @default(NEW)
+
+  // Asset linkage — manual fields kept per spec:161, FK optional
+  asset_code    String?
+  serial_number String?
+  asset_id      String?
+  asset         Asset?       @relation(fields: [asset_id], references: [id])
+
+  location   String?
+  contact    String?
+  department String?
+  impact     String?
+  urgency    String?
+
+  // People
+  requester_id    String
+  requester       User   @relation("Requester", fields: [requester_id], references: [id])
+  technician_id   String?
+  technician      User?  @relation("Technician", fields: [technician_id], references: [id])
+
+  // Work fields (separate per spec)
+  diagnosis      String?
+  work_performed String?
+  parts_used     String?
+  resolution     String?
+  solution       String? // legacy, kept for compat
+
+  // Timestamps per status
+  accepted_at DateTime?
+  started_at  DateTime?
+  resolved_at DateTime?
+  closed_at   DateTime?
+  due_at      DateTime?
+
+  // Optimistic locking
+  version Int @default(1)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  history     TicketHistory[]
+  attachments Attachment[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([requester_id])
+  @@index([technician_id])
+  @@index([created_at])
+  @@index([updated_at])
+  @@index([asset_code])
+  @@index([serial_number])
+  @@index([ticket_no])
+}
+
+model TicketHistory {
+  id          String       @id @default(cuid())
+  ticket_id   String
+  ticket      Ticket       @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  actor_id    String
+  actor       User         @relation(fields: [actor_id], references: [id])
+  from_status TicketStatus
+  to_status   TicketStatus
+  note        String?
+  is_internal Boolean      @default(false)
+  created_at  DateTime     @default(now())
+
+  @@index([ticket_id])
+  @@index([actor_id])
+  @@index([created_at])
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  ticket_id    String
+  ticket       Ticket   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  filename     String
+  content_type String
+  size         Int
+  storage_path String
+  uploaded_by  String
+  uploader     User     @relation(fields: [uploaded_by], references: [id])
+  uploaded_at  DateTime @default(now())
+
+  @@index([ticket_id])
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  actor_id    String
+  actor       User     @relation(fields: [actor_id], references: [id])
+  action      String // e.g. ticket.created
+  entity_type String // e.g. Ticket
+  entity_id   String
+  details     Json?
+  created_at  DateTime @default(now())
+
+  @@index([actor_id])
+  @@index([entity_type, entity_id])
+  @@index([created_at])
+}
