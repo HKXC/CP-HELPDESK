@@ -36,6 +36,10 @@ yarn-error.log*
 # uploads (attachment binaries — metadata in DB only)
 /uploads
 
+# local runtime logs
+/logs
+dev.log
+
 # vercel
 .vercel
 
