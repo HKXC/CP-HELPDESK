@@ -260,7 +260,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 `src/lib/store.ts` เหลือ re-export `STATUS_LABEL`/`STATUS_ORDER` จาก `constants.ts` + legacy interfaces; ฟังก์ชัน `seedIfEmpty`/`getTickets`/`saveTickets`/`getSession` เป็น no-op + `console.warn` (ข้อมูลอยู่ใน DB แล้ว)
 
 ### 9.2 PostgreSQL (เฟส 2 — เสร็จ 2026-09-12)
-- DB server: PostgreSQL 17 `postgresql-x64-17` Running, `helpdesk` DB (`helpdesk` user, `[redacted]`), `postgres` superuser `postgres`
+- DB server: PostgreSQL 17 `postgresql-x64-17` Running, `helpdesk` DB (`helpdesk` user, รหัสผ่านอยู่ใน `.env` ที่ไม่ commit), `postgres` superuser `postgres`
 - `prisma@6.19.3` + `@prisma/client` + `pg` + `bcryptjs` + `tsx`
 - `prisma/schema.prisma` → `provider = "postgresql"` + `env("DATABASE_URL")` + 4 enums (`Role`/`TicketStatus` 10 ค่า/`Priority`/`AssetStatus`) + 6 tables (`User`/`Asset`/`Ticket`/`TicketHistory`/`Attachment`/`ActivityLog`) + FK จริง + index ทุกฟิลด์ + `version` optimistic locking + `TicketHistory.is_internal`
 - Migrations: `prisma/migrations/20260912043824_init/migration.sql` (213 บรรทัด) + `ticket_no_seq` (`CREATE SEQUENCE`, `SELECT nextval`, `setval`)

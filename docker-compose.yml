@@ -7,7 +7,9 @@ services:
     environment:
       POSTGRES_DB: helpdesk
       POSTGRES_USER: helpdesk
-      POSTGRES_PASSWORD: [redacted]
+      # รหัสผ่านอ่านจาก ENV (ไม่ hardcode ใน repo) — ตั้งค่าใน shell หรือไฟล์ .env (untracked)
+      # เช่น: $env:POSTGRES_PASSWORD="..." ; docker compose up -d
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD before running docker compose up}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

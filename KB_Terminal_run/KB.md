@@ -54,9 +54,9 @@
 
 | Role | อีเมล | รหัสผ่าน | หมายเหตุ |
 |---|---|---|---|
-| USER | `user@jp.local` | `[redacted]` | ชื่อ "พนักงานทั่วไป" แผนกบัญชี |
-| TECH | `tech@jp.local` | `[redacted]` | ชื่อ "ช่างสมชาย" แผนก IT Support |
-| ADMIN | `admin@jp.local` | `[redacted]` | ชื่อ "แอดมิน JP" แผนก IT |
+| USER | `user@jp.local` | (ดูใน `.env` — ไม่ commit) | ชื่อ "พนักงานทั่วไป" แผนกบัญชี |
+| TECH | `tech@jp.local` | (ดูใน `.env` — ไม่ commit) | ชื่อ "ช่างสมชาย" แผนก IT Support |
+| ADMIN | `admin@jp.local` | (ดูใน `.env` — ไม่ commit) | ชื่อ "แอดมิน JP" แผนก IT |
 
 > ⚠️ รหัสยังเป็น **plaintext** ใน seed — ตอนย้าย PostgreSQL ต้อง hash ด้วย bcrypt จาก ENV
 > (`SEED_*_PASSWORD`, ไม่ set = seed ล้มดังๆ) ตามกติกาที่ล็อกไว้

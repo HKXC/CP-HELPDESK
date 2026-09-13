@@ -124,7 +124,7 @@ admin ใช้ startsWith)
   - พื้นมี glow 3 ดวง (radial indigo/violet, blur 60-80px) + การ์ดกลาง
     max-w-md: โลโก้ CP + "CP Helpdesk / ระบบแจ้งซ่อมอุปกรณ์ครุภัณฑ์"
   - ฟอร์ม: อีเมล (text, ค่าเริ่ม user@jp.local) + รหัสผ่าน (password,
-    ค่าเริ่ม [redacted]) → ปุ่ม "เข้าสู่ระบบ" (gradient, กดแล้วขึ้น
+    เริ่มว่าง ไม่ prefill) → ปุ่ม "เข้าสู่ระบบ" (gradient, กดแล้วขึ้น
     "กำลังเข้าสู่ระบบ…") ยิง POST /api/auth/login สำเร็จไป `/`
   - กล่อง "บัญชีทดสอบ": ปุ่มลัด User/Tech/Admin 3 ปุ่ม (กดแล้วกรอกฟอร์ม
     ให้เฉยๆ ยังไม่ submit) — error เป็นกล่องแดง (รหัสผิด/ต่อไม่ติด)

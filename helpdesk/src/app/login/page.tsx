@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("user@jp.local");
-  const [password, setPassword] = useState("[redacted]");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -33,9 +33,9 @@ export default function LoginPage() {
     }
   };
 
-  const quick = (em: string, pw: string) => {
+  const quick = (em: string) => {
     setEmail(em);
-    setPassword(pw);
+    setPassword("");
   };
 
   return (
@@ -99,13 +99,13 @@ export default function LoginPage() {
             </p>
             <div className="flex flex-wrap gap-2">
               {[
-                { label: "User", em: "user@jp.local", pw: "[redacted]", color: "rgba(16,185,129,0.15)", text: "#34d399" },
-                { label: "Tech", em: "tech@jp.local", pw: "[redacted]", color: "rgba(59,130,246,0.15)", text: "#60a5fa" },
-                { label: "Admin", em: "admin@jp.local", pw: "[redacted]", color: "rgba(139,92,246,0.15)", text: "#a78bfa" },
+                { label: "User", em: "user@jp.local", color: "rgba(16,185,129,0.15)", text: "#34d399" },
+                { label: "Tech", em: "tech@jp.local", color: "rgba(59,130,246,0.15)", text: "#60a5fa" },
+                { label: "Admin", em: "admin@jp.local", color: "rgba(139,92,246,0.15)", text: "#a78bfa" },
               ].map((acc) => (
                 <button
                   key={acc.label}
-                  onClick={() => quick(acc.em, acc.pw)}
+                  onClick={() => quick(acc.em)}
                   className="rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200 hover:scale-105"
                   style={{ background: acc.color, color: acc.text, border: `1px solid ${acc.text}30` }}
                 >
