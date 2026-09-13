@@ -1,0 +1,384 @@
+================================================================
+CP HELPDESK — UI/UX FRONTEND STRUCTURE SUMMARY (ฉบับละเอียดทุกจุด)
+อัปเดต: 2026-09-13 | แหล่งโค้ด: E:\HELPDESK 004\helpdesk\src
+================================================================
+
+สารบัญ
+  1. ภาพรวมสถาปัตยกรรม Frontend
+  2. App Shell (โครงหุ้มทุกหน้า): Sidebar / Topbar / Auth gate / Mobile
+  3. เมนูตาม Role (USER / TECH / ADMIN)
+  4. Shared UI Primitives (PageHeader / Empty / Field / Chip / StatusBadge)
+  5. รายละเอียดทีละหน้า (12 หน้า): URL / สิทธิ์ / section / ฟิลด์ / ปุ่ม / state
+     5.1  / (Dashboard)   5.2  /login   5.3  /new-ticket   5.4  /my-tickets
+     5.5  /track          5.6  /track/[id]                5.7  /assets
+     5.8  /assets/[id]    5.9  /knowledge                 5.10 /technician
+     5.11 /admin          5.12 /terminal
+  6. แผนที่ลิงก์ข้ามหน้า (UX Flow)
+  7. Design System: Tokens + Reusable Classes + Terminal Theme
+  8. Responsive Breakpoints
+  9. Motion / Animation Inventory
+  10. รูปแบบฟีเจอร์ซ้ำ (Feature Patterns)
+
+----------------------------------------------------------------
+1. ภาพรวมสถาปัตยกรรม FRONTEND
+----------------------------------------------------------------
+- Next.js 16.3.4 (App Router) + React 19 + Tailwind CSS v4
+  (`@import "tailwindcss"` ใน globals.css:1, ไม่มี tailwind.config / @theme)
+- ทุกหน้าอยู่ใน src/app (route ตามโฟลเดอร์), หุ้มด้วย <AppShell>
+  ยกเว้น /login (render เปลือย)
+- Auth: cookie httpOnly `helpdesk_session` (8 ชม.) ตรวจ 2 ชั้น —
+  (1) proxy.ts (middleware): PUBLIC_PATHS มีแค่ /login,
+  /api/auth/login, /api/health นอกนั้นไม่มี cookie ดีดไป /login
+  (หน้าเว็บ) หรือ 401 (API); (2) AppShell เรียก /api/auth/me
+  ทุกครั้งที่เปลี่ยนหน้า ถ้าไม่ผ่านดีดไป /login
+- ภาษา: <html lang="th">, ฟอนต์ Inter + Noto Sans Thai ผ่าน
+  <link> Google Fonts ใน layout.tsx:14-19 (ยังไม่ใช่ next/font)
+- ธีม: dark glassmorphism พื้น #0b0f1a + ambient glow 2 ดวง
+
+----------------------------------------------------------------
+2. APP SHELL (src/components/AppShell.tsx, 348 บรรทัด, "use client")
+----------------------------------------------------------------
+โครง (AppShell.tsx:260-327):
+  div.flex.min-h-screen
+  ├ ambient-glow x2 (indigo ซ้ายบน / violet ขวาล่าง, blur 120px, opacity 0.07)
+  ├ aside.desktop: sticky เต็มจอ, โชว์เฉพาะ md ขึ้นไป (hidden md:block)
+  ├ div.mobile-drawer (เฉพาะตอนเปิด, fixed inset-0 z-50, มีฉากดำ bg-black/60 + blur)
+  └ div.flex-1 (คอลัมน์เนื้อหา)
+     ├ header.topbar: sticky, blur, มีปุ่ม hamburger (มือถือ) / ปุ่มย่อ sidebar (desktop)
+     │   + ช่องค้นหากลาง (sm ขึ้นไป) + badge role + ชื่อผู้ใช้
+     ├ main: mx-auto w-full max-w-6xl (1152px) p-4/sm:p-6 + animate-fade-in
+     └ footer: © 2026 CP Helpdesk • ระบบแจ้งซ่อมครุภัณฑ์
+
+-- Auth/loading gate (AppShell.tsx:80-100): เรียก /api/auth/me (no-store)
+   ทุกครั้งที่ pathname เปลี่ยน; ยังโหลด = spinner กลางจอ + "กำลังโหลด…";
+   path /login = คืน children เปลือย; ไม่มี user = replace ไป /login
+-- Sidebar (gradient 180° #0f172a→#1e1b4b):
+   โลโก้ /logo/cp-logo.png (40px) + "CP Helpdesk / แจ้งซ่อมครุภัณฑ์ IT"
+   + ช่องค้นหาใน sidebar (เฉพาะตอนกาง) placeholder "ค้นหาเลข Ticket / อาการ…"
+   + ป้าย ⌘K + nav 3 กลุ่ม + การ์ดผู้ใช้ (avatar ตัวอักษรแรก, ชื่อ, role•แผนก)
+   + ปุ่ม "ออกจากระบบ" (hover แดง, ยิง POST /api/auth/logout แล้วไป /login)
+-- SideLink: แถวสูง py-2.5, icon 18px, ตัว active = พื้น gradient + เงา glow
+-- ย่อ sidebar (desktop): 280px ↔ 76px (transition 300ms), เหลือแต่ icon,
+   หัวข้อกลุ่มเหลือ "•", ซ่อนช่องค้นหา + การ์ดผู้ใช้
+-- มือถือ: ปุ่ม hamburger → drawer กว้าง 300px เลื่อนจากซ้าย
+   (animate-slide-in-left), กดฉากหลัง/ลิงก์/ค้นหา = ปิด
+-- Topbar search 2 จุด (sidebar + กลาง topbar) พฤติกรรมเดียวกัน:
+   submit → router.push(/track?q=<คำค้น>)
+
+----------------------------------------------------------------
+3. เมนูตาม ROLE
+----------------------------------------------------------------
+NAV_USER (6, ทุกคนที่ login) — AppShell.tsx:30-37
+  /            แดชบอร์ด            (LayoutDashboard)
+  /new-ticket  แจ้งซ่อมใหม่        (PlusCircle)
+  /my-tickets  รายการของฉัน        (ListChecks)
+  /track       ติดตามสถานะ         (Search)
+  /assets      ครุภัณฑ์            (Package)
+  /knowledge   คู่มือ / บทความ     (BookOpen)
+NAV_TECH (+1, TECH/ADMIN) — AppShell.tsx:39
+  /technician  งานที่ได้รับมอบหมาย (Wrench)
+NAV_ADMIN (+4, ADMIN เท่านั้น) — AppShell.tsx:41-46
+  /admin               จัดการงานทั้งหมด (ShieldCheck)
+  /admin?tab=assets    จัดการครุภัณฑ์   (ClipboardList)
+  /admin?tab=reports   รายงาน           (BarChart3)
+  /terminal            Terminal         (Terminal)
+รวม: USER เห็น 6 / TECH เห็น 7 / ADMIN เห็น 11
+กลุ่มใน sidebar: "เมนูหลัก" (ทุกคน) / "ช่างซ่อม" (TECH+) /
+"ผู้ดูแลระบบ" (ADMIN) — active ดูจาก path (terminal ตรงตัว,
+admin ใช้ startsWith)
+
+----------------------------------------------------------------
+4. SHARED UI PRIMITIVES
+----------------------------------------------------------------
+4.1 PageHeader (ui.tsx:5-11) — หัวทุกหน้า: h1 ไล่สีขาว→indigo→violet
+     (bg-clip-text, extrabold 24px) + คำโปรยสี secondary + ปุ่ม action
+     ขวา (ถ้ามี)
+4.2 Empty (ui.tsx:19-27) — การ์ดกลาง p-10: ไอคอน 📭 ในกรอบ +
+     ข้อความ muted (เช่น "ไม่พบรายการ", "ยังไม่มีงานแจ้งซ่อม")
+4.3 Field (ui.tsx:33-38) — label sm secondary + children (input/select)
+4.4 Chip (ui.tsx:40-43) — ป้ายเม็ด xs พื้น glass + ขอบ subtle
+4.5 StatusBadge (StatusBadge.tsx + constants.ts) — เม็ด 10 สถานะ:
+     จุดสี + ชื่อไทย (ไม่พึ่งสีอย่างเดียว):
+     NEW=ใหม่ (amber) / TRIAGED=คัดกรองแล้ว (sky) /
+     ASSIGNED=มอบหมายแล้ว (blue) / IN_PROGRESS=กำลังซ่อม (violet) /
+     WAITING_REQUESTER=รอข้อมูลผู้แจ้ง (yellow) /
+     WAITING_PARTS=รออะไหล่ (orange) / RESOLVED=แก้ไขแล้ว (emerald) /
+     CLOSED=ปิดงาน (slate) / REOPENED=เปิดใหม่ (pink) /
+     CANCELLED=ยกเลิก (red) — พื้นสี 15% + เงา glow จาง
+
+----------------------------------------------------------------
+5. รายละเอียดทีละหน้า
+----------------------------------------------------------------
+5.1 DASHBOARD `/` (app/page.tsx:1-159, ทุก role)
+  - ดึง /api/overview + /api/assets?limit=5 (USER โดน scope งานตัวเอง)
+  - บนลงล่าง: h1 "แดชบอร์ด" → การ์ดสถิติ 4 ใบ (grid 2 คอลัมน์บนมือถือ,
+    4 คอลัมน์บน lg): ใหม่/คัดกรอง (amber) / กำลังซ่อม (violet) /
+    รอข้อมูล-อะไหล่ (orange) / เสร็จ+ปิด (green)
+  - แถบเตือน "⚠ งานเกินกำหนด N งาน" (โผล่เฉพาะ overdue>0)
+  - กริด 3 คอลัมน์ (lg): ซ้ายกว้าง "งานล่าสุด" (ปุ่ม + แจ้งซ่อมใหม่ →
+    /new-ticket, รายการกด → /track/[id] พร้อม ticket_no•หัวข้อ•asset•คนแจ้ง
+    + StatusBadge) / ขวา "ครุภัณฑ์ (ตัวอย่าง)" + ลิงก์ "ดูครุภัณฑ์ทั้งหมด" → /assets
+  - state: spinner / ข้อความแดง / "ยังไม่มีงานแจ้งซ่อม" / "ยังไม่มีครุภัณฑ์"
+
+5.2 LOGIN `/login` (app/login/page.tsx:1-121, สาธารณะ, ไม่มี shell)
+  - พื้นมี glow 3 ดวง (radial indigo/violet, blur 60-80px) + การ์ดกลาง
+    max-w-md: โลโก้ CP + "CP Helpdesk / ระบบแจ้งซ่อมอุปกรณ์ครุภัณฑ์"
+  - ฟอร์ม: อีเมล (text, ค่าเริ่ม user@jp.local) + รหัสผ่าน (password,
+    ค่าเริ่ม [redacted]) → ปุ่ม "เข้าสู่ระบบ" (gradient, กดแล้วขึ้น
+    "กำลังเข้าสู่ระบบ…") ยิง POST /api/auth/login สำเร็จไป `/`
+  - กล่อง "บัญชีทดสอบ": ปุ่มลัด User/Tech/Admin 3 ปุ่ม (กดแล้วกรอกฟอร์ม
+    ให้เฉยๆ ยังไม่ submit) — error เป็นกล่องแดง (รหัสผิด/ต่อไม่ติด)
+
+5.3 แจ้งซ่อมใหม่ `/new-ticket` (app/new-ticket/page.tsx:1-168, ทุก role)
+  - ฟอร์มกริด 3 คอลัมน์ (lg): ซ้ายกว้าง (ฟอร์ม) + ขวา (ข้อมูลครุภัณฑ์ที่เลือก)
+  - ฟิลด์ (required มี * 2 ตัว): หัวข้อปัญหา* (text) / หมวดอุปกรณ์
+    (select 6 หมวด, ค่าเริ่ม คอมพิวเตอร์) / ความเร่งด่วน (select
+    LOW=ต่ำ/MEDIUM=ปานกลาง/HIGH=สูง/URGENT=ด่วนมาก) /
+    รายละเอียดอาการ* (textarea 5 แถว) / เลขทรัพย์สิน (text + datalist
+    จาก /api/assets?limit=100 เลือกแล้วเติมสถานที่ + โชว์แผงข้างให้ตรวจ) /
+    สถานที่ (text) / ช่องทางติดต่อ (text, เช่น โทร 1234) / แผนก (text) /
+    ผลกระทบ Impact (select: งานหยุดทั้งแผนก/บางส่วนช้า/เล็กน้อย/ยังทำได้
+    + ไม่ระบุ) / ความเร่งด่วน Urgency (select: ทันที/วันนี้/สัปดาห์/เมื่อว่าง
+    + ไม่ระบุ)
+  - ปุ่ม "ส่งใบแจ้งซ่อม" (gradient, กันกดซ้ำด้วย submitting):
+    POST /api/tickets → สำเร็จพาไป /track/[id] ของใบที่สร้างทันที
+  - validate หน้าบ้าน "กรุณากรอกหัวข้อและรายละเอียด", error API เป็นกล่องแดง,
+    ข้อมูลคงอยู่เมื่อ validate ตก
+
+5.4 รายการของฉัน `/my-tickets` (app/my-tickets/page.tsx:1-118, ทุก role)
+  - USER เห็นเฉพาะของตัวเอง (API กรอง server-side)
+  - แถว sort: select เรียง (วันที่สร้าง/อัปเดตล่าสุด/ความสำคัญ/สถานะ) +
+    select ทิศ (มาก→น้อย/น้อย→มาก) → ยิง ?sort=&order= ใหม่
+  - ปุ่มเม็ดฟิลเตอร์ 11 ปุ่ม (ทั้งหมด + 10 สถานะ) เลือกทีละอัน
+    (active = พื้น gradient) → ยิง ?status=&limit=100 ใหม่
+  - รายการเป็นการ์ดกดได้ (ticket_no•หัวข้อ + หมวด•วันที่ + StatusBadge) → /track/[id]
+  - state: spinner / ข้อความแดง / Empty "ไม่พบรายการ"
+
+5.5 ติดตามสถานะ `/track`, `/track?q=...` (app/track/page.tsx:1-93, ทุก role)
+  - ฟอร์มค้นหาเดียว (max-w-lg): input "พิมพ์เพื่อค้นหา…" + ปุ่ม "ค้นหา"
+    (gradient) ค้นเลข Ticket/หัวข้อ/อาการ/asset_code/serial/คนแจ้ง
+    (limit 50), URL ?q= อัปเดตแบบไม่รีโหลด ( Suspense fallback "กำลังโหลด…")
+  - ผลเป็นการ์ดกดได้ → /track/[id] (ว่าง = Empty "ไม่พบงานที่ค้นหา",
+    พังเงียบคงรายการเดิม), ช่องค้นหาทั่ว (sidebar/topbar) พามาหน้านี้
+
+5.6 รายละเอียดงาน `/track/[id]` (app/track/[id]/page.tsx:1-477, ทุก role)
+  - สิทธิ์: USER ดูเฉพาะของตัวเอง + ถูกกรอง internal; TECH
+    ดูงานตัวเอง/คิวว่าง; ADMIN ดูหมด (บังคับฝั่ง API)
+  - แผนที่ปุ่มเปลี่ยนสถานะ ALLOWED (10 สถานะ, CANCELLED ไม่มีทางไปต่อ)
+  - บนลงล่าง: บรรทัด ticket_no•วันที่ → h1 หัวข้อ (ไล่สี) → แถว chips
+    (StatusBadge, หมวด•priority, ผู้แจ้ง, ช่างถ้ามี, v{version})
+  - การ์ด Timeline: เม็ด 10 สถานะคั่น › (อันที่ผ่าน = พื้น gradient) +
+    แถบ progress % = (ขั้นปัจจุบัน+1)/10
+  - กริด 3 คอลัมน์ (lg): ซ้ายกว้าง 2 —
+    (1) "รายละเอียดปัญหา": เนื้อความ + กล่อง 3 ช่อง (เลขทรัพย์สิน/Serial/
+    สถานที่) + กล่อง Diagnosis/Work/Parts/Resolution (โผล่เมื่อมีค่า)
+    (2) "ประวัติการดำเนินงาน": แถวละ คน•เวลา + ป้าย internal (เหลือง,
+    staff เห็น) + from→to + หมายเหตุ, ว่าง = "ยังไม่มีประวัติ" +
+    กล่อง "ติดตามเพิ่มเติม / ถามช่าง" (input + ปุ่มส่ง → POST .../comments)
+    (3) "ไฟล์แนบ (N)": ลิงก์โหลด (ชื่อ + ขนาด KB) + input อัปโหลด
+    (สูงสุด 10MB, เลือกแล้วอัปโหลดทันที)
+  - ขวา (เฉพาะ TECH/ADMIN) "จัดการงาน": textarea วิธีแก้ + input
+    Diagnosis/Work/Parts/Resolution + ปุ่ม "บันทึกโน้ต" (PATCH ไม่เปลี่ยนสถานะ)
+    + input หมายเหตุเปลี่ยนสถานะ + checkbox "บันทึกเป็น internal
+    (requester มองไม่เห็น)" + ปุ่มสถานะถัดไปแบบ dynamic (2 คอลัมน์,
+    กด CLOSED มี window.confirm) + ปุ่ม "Reopen งานนี้" (ตอน RESOLVED/CLOSED)
+    + (ADMIN เท่านั้น) select เลือกช่าง (TECH+ADMIN) + ปุ่ม "มอบหมาย"
+  - ขวา (requester ธรรมดา ตอน RESOLVED/CLOSED): การ์ด "การดำเนินการ" +
+    input เหตุผล + ปุ่ม Reopen
+  - state: spinner เต็มจอ / Empty error / Empty ไม่พบ / "ไม่มีสถานะถัดไป" /
+    กล่องแดง actionError ทุกปุ่ม (กันกดซ้ำด้วย actionLoading)
+
+5.7 ครุภัณฑ์ `/assets` (app/assets/page.tsx:1-171, ดูได้ทุกคน/แก้ ADMIN)
+  - ช่องค้นหา max-w-lg (debounce 300ms) ยิง /api/assets?q=&limit=100
+  - กริด 3 คอลัมน์ (lg): ซ้ายกว้าง = การ์ดต่อเครื่อง (กดชื่อ →
+    /assets/[id]): asset_code•ชื่อ + SN•ที่ตั้ง•หมวด•สถานะ + เม็ด tags +
+    ปุ่ม "ลบ" (ADMIN, มี confirm; มีใบงานผูก = กลายเป็น RETIRED)
+  - ขวา: ฟอร์ม "เพิ่มครุภัณฑ์" (ADMIN) — เลขทรัพย์สิน*/ชื่อ*/Serial*
+    (required), หมวด (select), Tags (คั่นจุลภาค), ที่ตั้ง → ปุ่ม
+    "บันทึกครุภัณฑ์" (409 เมื่อเลข/Serial ชน); non-ADMIN เห็นข้อความ
+    "เฉพาะ ADMIN เท่านั้นที่เพิ่ม/ลบครุภัณฑ์ได้"
+  - state: spinner / error รวม (โหลด/validate/API) / Empty ไม่พบครุภัณฑ์
+
+5.8 รายละเอียดครุภัณฑ์ `/assets/[id]` (app/assets/[id]/page.tsx:1-100)
+  - อ่านอย่างเดียว (ไม่มีปุ่ม/ฟอร์ม): ซ้าย = 9 ช่อง (เลขทรัพย์สิน/ชื่อ/
+    หมวด/Serial/Tags/ที่ตั้ง/ยี่ห้อ-รุ่น/แผนก-ผู้รับผิดชอบ/สถานะ) + notes;
+    ขวา = "ประวัติซ่อม (N ใบล่าสุด)" กด → /track/[id]
+  - state: spinner / ข้อความแดง / Empty ไม่พบ / Empty ยังไม่มีประวัติซ่อม
+
+5.9 คู่มือ `/knowledge` (app/knowledge/page.tsx:1-30, ทุก role)
+  - static 100% (ไม่ยิง API): กริด 2 คอลัมน์ (sm) การ์ดกดเด้ง 4 ใบ —
+    ไอคอน + เม็ด tag (คอมพิวเตอร์/ปริ้นเตอร์/เน็ตเวิร์ก/ทิป) + หัวข้อ +
+    วิธีแก้เบื้องต้น (คอม beep/กระดาษติด/Wi-Fi/ทิปแจ้งซ่อมให้เร็ว)
+
+5.10 งานช่าง `/technician` (app/technician/page.tsx:1-81, TECH/ADMIN)
+  - ไม่มีฟอร์ม/ฟิลเตอร์: หัว "งานของคุณ + งานรอรับ • ทั้งหมด N งาน"
+    (ดึง /api/tickets?limit=100 แล้วกรองหน้าบ้าน: งานตัวเอง หรือ
+    งานว่างสถานะ NEW/TRIAGED/ASSIGNED)
+  - การ์ดกดได้ → /track/[id]: ticket_no•หัวข้อ + chips (ผู้แจ้ง/สถานที่/
+    priority/ของคุณ/รอรับ) + StatusBadge; ว่าง = Empty "ยังไม่มีงานในคิว"
+    (USER เปิด URL ตรงจะเจอจอว่าง; ไม่มี error UI แยก)
+
+5.11 แอดมิน `/admin`, `/admin?tab=reports`, `/admin?tab=users`
+     (app/admin/page.tsx:1-212, ADMIN; Suspense fallback)
+  - หัว + ปุ่ม Export CSV (โผล่เฉพาะ tab รายงานและมีข้อมูล) + แถบ tab
+    (งานทั้งหมด/รายงาน/ผู้ใช้, active = gradient) + ลิงก์ครุภัณฑ์
+  - tab งานทั้งหมด: แถว filter (date จาก–ถึง + select เรียง 4 แบบ,
+    order desc ตายตัว, เปลี่ยนแล้ว reset หน้า 1) → รายการกดได้ →
+    /track/[id] → แถบแบ่งหน้า (ก่อนหน้า/ถัดไป + "หน้า p/n", หน้า 20 ใบ)
+  - tab รายงาน: กราฟแท่ง "สรุปตามสถานะ" 10 แท่งสีตาม severity
+    (ความกว้าง % + ตัวเลข) + "สรุปตามหมวดอุปกรณ์" + หมายเหตุวิเคราะห์งานซ้ำ
+    (รวมเฉพาะหน้าที่โหลดมา — ข้อจำกัดที่รู้ไว้)
+  - tab ผู้ใช้: แถวละ ชื่อ + email•แผนก + เม็ด role (อ่านอย่างเดียว)
+  - Export CSV: คอลัมน์ ticket_no,title,category,priority,status,
+    asset_code,serial,requester,technician,created_at + BOM (Excel ไทยไม่เพี้ยน)
+    ชื่อไฟล์ cp-helpdesk-report.csv
+  - state: spinner รวม / Empty 3 แบบ (ยังไม่มีงาน/ยังไม่มีข้อมูล/ยังไม่มีผู้ใช้)
+
+5.12 TERMINAL `/terminal` (app/terminal/page.tsx:1-608, ADMIN ล็อกแข็ง)
+  - ไม่ใช่ ADMIN = การ์ด "⛔ เข้าถึงได้เฉพาะ ADMIN" + บอก role ตัวเอง
+  - หน้าต่าง terminal กว้างสุด 980px: แถบชื่อ (จุดแดงเหลืองเขียว +
+    "CP HELPDESK — ระบบแจ้งซ่อมครุภัณฑ์" + สถานะเชื่อมต่อ localhost:4502
+    กระพริบ) + แถบ tab 4 ปุ่ม (กดแล้ว scroll นิ่มไปบล็อกนั้น)
+  - บล็อก status: prompt "helpdesk status" + ตาราง 3 บริการ
+    (Dev Server RUNNING / Database CONNECTED/SLOW/DOWN+latency /
+    Ticket API OK/SLOW/DOWN+latency) + แถบแดงเมื่อ health พัง
+  - บล็อก overview: prompt "overview --today" + แถวค่า
+    (ทั้งหมด/ใหม่-คัดกรอง/กำลังซ่อม/เสร็จ-ปิด/เกินกำหนด) มีแถบบาร์
+  - บล็อก db: prompt "db --table=tickets --recent 5" + ตาราง 6 คอลัมน์
+    (ID/ครุภัณฑ์/หน่วยงาน/ผู้แจ้ง/สถานะเม็ด/วันที่แจ้ง)
+  - บล็อก errors: prompt "logs --tail 20" + บรรทัด log
+    (เวลา/ระดับ ERROR-WARN-INFO/ข้อความ/แหล่งที่มา)
+  - บรรทัด prompt สด "cp@helpdesk:~/...$ ▊" (เคอร์เซอร์กะพริบ, พิมพ์ไม่ได้)
+  - state: ข้อมูลจริง 100% (health/overview/tickets-5/logs-20),
+    ว่าง = "ยังไม่มีข้อมูล/No logs yet" (ห้ามเลขแต่ง), ขอบเขียว/แดงตามสถานะ
+
+----------------------------------------------------------------
+6. แผนที่ลิงก์ข้ามหน้า (UX FLOW)
+----------------------------------------------------------------
+/ → /new-ticket (ปุ่ม +), /track/[id] (งานล่าสุด), /assets (ดูทั้งหมด)
+/new-ticket (สำเร็จ) → /track/[id] ใบที่สร้าง
+/my-tickets, /track, /technician, /admin (tab งาน), /assets/[id] → /track/[id]
+/assets (กดชื่อ) → /assets/[id]; /assets/[id] → /track/[id] (ประวัติซ่อม)
+/admin tabs ↔ /admin?tab=* (ลิงก์); /admin → /assets (ลิงก์);
+  reports → ดาวน์โหลด CSV (ไม่เปลี่ยนหน้า)
+ทั่วแอพ: ค้นหา (sidebar/topbar) → /track?q=...; ออกจากระบบ → /login;
+  login สำเร็จ → / (หมายเหตุ: sidebar มีลิงก์ /admin?tab=assets
+  แต่หน้า admin ไม่มี tab assets — ตกไปหน้า tab งาน)
+
+----------------------------------------------------------------
+7. DESIGN SYSTEM
+----------------------------------------------------------------
+7.1 TOKENS (globals.css:5-44)
+  พื้น: --bg-primary #0b0f1a / --bg-secondary #111827 /
+    --bg-card rgba(17,24,39,.6) / --bg-card-solid #1a2236 /
+    --bg-elevated rgba(30,41,59,.5) / --bg-glass rgba(255,255,255,.04) /
+    --bg-glass-hover ...08 / --bg-input rgba(15,23,42,.7)
+  ขอบ: --border-subtle rgba(255,255,255,.06) /
+    --border-medium ...1 / --border-accent rgba(99,102,241,.3)
+  ตัวอักษร: --text-primary #f1f5f9 / --text-secondary #94a3b8 /
+    --text-muted #64748b / --text-accent #818cf8
+    (หมายเหตุ: ไม่มีโทเค็น success/warn/danger — hardcode หน้างาน;
+    ไม่มี --font-*, --space-*, --container-*)
+  ไล่สี: --gradient-accent (indigo→violet→purple 135°) /
+    --gradient-accent-hover / --gradient-sidebar (180° #0f172a→#1e1b4b) /
+    --gradient-card-border (ประกาศไว้ ไม่ได้ใช้)
+  เงา: --shadow-glow-sm/md/lg (lg ไม่ได้ใช้) / --shadow-card /
+    --shadow-elevated (ไม่ได้ใช้)
+  มน: --radius-lg 16px / --radius-xl 20px (การ์ด) / --radius-2xl 24px
+    (ไม่ได้ใช้ตรงๆ)
+  ฟอนต์: body Inter + Noto Sans Thai + system fallbacks + antialiased
+    (layout โหลด Google Fonts 400-900 + display=swap + preconnect)
+
+7.2 REUSABLE CLASSES (globals.css)
+  .glass-card (115-127): พื้นการ์ด + blur 16px + ขอบ subtle + มน 20px +
+    เงา card; hover ขอบเข้ม + glow (ใช้ทุกการ์ดนิ่ง: ui Empty, dashboard,
+    detail, assets, admin, login, new-ticket)
+  .glass-card-interactive (129-144): + cursor pointer; hover พื้นสว่าง +
+    ขอบ accent + glow-md + ลอย -2px (ใช้ทุกรายการกดได้ + knowledge)
+  .btn-gradient (147-165): พื้น accent ขยาย 200% + ตัวขาว + มน 12px;
+    hover สี hover + glow + ลอย -1px; active ยุบกลับ
+    (ใช้: login, new-ticket, track search, track assign, assets save,
+    admin export, dashboard +)
+  .glass-input (168-182): พื้น input + มน 12px; placeholder muted;
+    focus ขอบ indigo + วงแหวน (ใช้ input ทุกฟอร์ม + ช่องค้นหา topbar)
+  .glass-select (185-206): เหมือน input + ลูกศร SVG กำหนดเอง +
+    padding ขวา 32px; option พื้น #0f172a (ใช้ select ทุกตัว)
+  scrollbar (56-69): กว้าง 6px, thumb indigo 25% (hover 40%), มน 8px;
+    selection (72-75): พื้น indigo 30%
+  .ambient-glow (230-239): วง 600px blur 120px opacity 0.07 fixed
+    (AppShell วาง 2 ดวง; login ใช้ radial-gradient 3 ดวงแยกต่างหาก)
+
+7.3 TERMINAL THEME (terminal/page.tsx:228-246, ชุดแยกใน <style>)
+  --void #080C14 / --term-bg #0E1520 / --panel #131B29 /
+  --panel-raised #17202F / --border #223047 / --border-soft #192335 /
+  --text-hi #E3EAF3 / --text-mid #93A2B7 / --text-dim #4C5B72 /
+  --cyan #5EEAD4 / --blue #7DA6FF / --green #4ADE80 /
+  --amber #F2B84B / --red #FF6E6E / --mono JetBrains Mono /
+  --ui Inter (โหลดฟอนต์ซ้ำใน body component)
+  คลาส: .terminal-window (กว้างสุด 980px กลางจอ, เงาดำใหญ่,
+    animation windowIn) / .title-bar (จุด 3 สี 11px + ชื่อ + สถานะ) /
+  .tab-bar/.tab (12.5px, active ขอบล่าง cyan) / .terminal-body
+    (mono, สูงสุด 66vh scroll) / .block (fade ทีละบล็อก delay สลับ) /
+  .prompt-line (13.5px user cyan/path blue) / .output (panel + ขอบซ้าย
+    เขียว/แดงตามสถานะ) / .status-grid (auto-fit min 200px) /
+  .kv-row (label 170px + bar) / .db-table (12.5px) /
+  .pill (10.5px: open แดง/progress เหลือง/closed เขียว/cancelled แดง) /
+  .log-line (เวลา 78px + ระดับ 52px + ข้อความ) / .live-prompt +
+  .cursor กะพริบ / .empty-terminal
+
+----------------------------------------------------------------
+8. RESPONSIVE BREAKPOINTS (mobile-first, มีแค่ sm/md/lg)
+----------------------------------------------------------------
+- sm (640px): ฟอร์ม 1→2 คอลัมน์ (new-ticket), knowledge 2 คอลัมน์,
+  main p-4→p-6, โชว์ช่องค้นหา topbar + badge role; สถิติ dashboard
+  2 คอลัมน์ตั้งแต่ base
+- md (768px): จุดสลับ sidebar — กาง sticky (76/280px) vs drawer ลอย
+  (300px + ฉากดำ blur); สลับปุ่ม hamburger/collapse
+- lg (1024px): เนื้อหา 1→3 คอลัมน์ (detail 2+1, assets 2+1, dashboard 2+1,
+  ฟอร์มแจ้งซ่อม 2+1), สถิติ 4 คอลัมน์, รายงาน 2 คอลัมน์
+- ไม่มี xl/2xl; custom media query เดียว: terminal ≤640px
+  (label 120px + ตาราง scroll-x)
+- เนื้อหาหลัก cap max-w-6xl (1152px) กลางจอทุกหน้า; terminal cap ซ้อน
+  980px; login กลางจอ max-w-md; input ค้นหา cap max-w-lg
+
+----------------------------------------------------------------
+9. MOTION / ANIMATION INVENTORY
+----------------------------------------------------------------
+- keyframes กลาง (globals.css:78-112): fade-in (ลอยขึ้น 8px 0.4s) /
+  slide-up (20px 0.5s) / slide-in-left (drawer 0.4s) / glow-pulse,
+  shimmer, float, gradient-shift (ประกาศไว้ ไม่ได้ใช้ 4 ตัวหลัง)
+- ใช้จริง: .animate-fade-in (หัวทุกหน้า + main), .animate-slide-up
+  + delay สลับ 0.05-0.2s (การ์ดเกือบทุกหน้า), .stagger (ลูกคนที่ 1-8
+  delay .05-.4s: สถิติ, knowledge, ผลค้นหา, my-tickets, technician, admin)
+- spinner มาตรฐานทุกหน้า: วง 24/32px ขอบ indigo ปลายโปร่งใสหมุน
+- hover: การ์ดลอย -2px, ปุ่มลอย -1px, ลิงก์ bg-white/5, ปุ่มลบแดงจาง
+- transition: all .3s (glass/btn), 200/300ms (shell), 500ms (progress bar),
+  700ms (กราฟ admin); terminal: windowIn .5s, blockIn .45s สลับ delay,
+  pulse วงเขียว 2.2s, cursor blink 1.05s, tab scroll smooth
+- ไม่มี reduced-motion guard (งานค้างตามสเปก)
+
+----------------------------------------------------------------
+10. รูปแบบฟีเจอร์ซ้ำ (FEATURE PATTERNS)
+----------------------------------------------------------------
+A. List + Detail: my-tickets/track/technician/admin/assets (list การ์ดกดได้)
+   → track/[id] หรือ assets/[id] (detail) — เหมือนกันทั้งแอพ
+B. Search-as-you-type vs submit: assets (debounce 300ms) / track+topbar
+   (submit/Enter) / my-tickets+admin (ปุ่ม/select)
+C. Status pill + timeline + progress: StatusBadge (10 สี) ใช้ทุกที่ +
+   track/[id] ขยายเป็น timeline 10 เม็ด + progress bar
+D. Role-gated UI: ฟอร์มเพิ่ม/ลบ (assets), แผงช่าง (detail), tab admin,
+   terminal (ล็อกแข็ง) — ซ่อนตาม role + บังคับซ้ำฝั่ง API
+E. Optimistic-locking UX: ทุก PATCH ส่ง version, ชน = 409 +
+   ข้อความ "Data was modified by another user. Please refresh."
+F. Empty/loading/error มาตรฐาน: spinner indigo / Empty 📭 /
+   กล่องแดง error (บางหน้าเงียบ เช่น track ค้นหาพังคงรายการเดิม)
+G. Confirm destructive: window.confirm ก่อน CLOSED (detail) และก่อนลบ
+   ครุภัณฑ์ (assets); ผูก ticket = RETIRED แทนลบจริง
+H. CSV export: ปุ่มเดียวใน admin reports (BOM + 10 คอลัมน์)
+I. Test-account shortcuts: ปุ่มกรอกอีเมล 3 role ใน login
+J. Terminal-as-readonly-dashboard: 4 บล็อกข้อมูลจริง + empty state
+   แทนเลขแต่ง (ไม่มีปุ่มแก้ไขใดๆ)
+
+================================================================
+จบไฟล์ — ที่มา: อ่านโค้ดจริง src/app + src/components (2026-09-13)
+================================================================
