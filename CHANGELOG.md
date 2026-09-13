@@ -22,6 +22,21 @@
 - Vercel Blob store → `BLOB_READ_WRITE_TOKEN` ใน Vercel Env
 - เลือกทาง deploy: GitHub import หรือ `npx vercel` CLI
 
+## 2026-09-13 — Smoke local หลังแก้ Vercel-prep (dev server :4502, DB local)
+
+- `/api/health`: `ok/connected` (DIRECT_URL ใหม่ใช้งานได้)
+- ADMIN login 200 / รหัสผิด 401 / `me` = ADMIN
+- `tickets` total=2, `assets` count=2 + detail 200, ticket detail history/attachments ครบ และ **ไม่รั่ว `storage_path`**
+- `/api/users`: USER full→403, USER ?role=TECH→403, TECH ?role=TECH→200, TECH full→403, ADMIN full→200 (3 users)
+- `POST comments` ด้วย USER→201, history 1→2, USER ไม่เห็น internal
+- หมายเหตุ: มี history `smoke-test comment ลบทิ้งได้` 1 แถวใน DB local (ลบได้)
+- Dev server ยังรันค้างที่ :4502 หลัง smoke (ดับเบิลคลิก `run-4502.bat` จะ kill ตัวเก่าแล้วรันใหม่เอง)
+
+## 2026-09-13 — Prod-mode proof (`next start` :4503 จาก build เดียวกับที่จะขึ้น Vercel)
+
+- `/api/health` → `ok/connected` (latency 2ms), `/login` → 200, `/api/tickets` ไม่มี session → 401 (proxy ทำงาน)
+- หยุด prod server หลังเทสแล้ว — เครื่องว่างสำหรับ `run-4502.bat` (dev :4502) ตามปกติ
+
 
 ## 2026-09-12 — รอบ P1–P5 (ตามแผน SKILL2.md / KB_web.md)
 
