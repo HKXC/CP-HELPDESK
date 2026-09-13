@@ -4,16 +4,16 @@ Side Navigation แบบ Toolfolio + ระบบ Helpdesk ครบ flow
 
 ## วิธีรัน
 ```bash
-cd "E:\HELPDESK 004\helpdesk"
-npm install
-npm run dev
+# ดับเบิลคลิก E:\HELPDESK 004\run-4502.bat (พอร์ต 4502)
+# หรือรันเอง: npm run dev:4502
 ```
-เปิด http://localhost:3000 → จะเด้งไป `/login`
+เปิด http://localhost:4502 → จะเด้งไป `/login`
 
 ## บัญชีทดสอบ
-- User: `user@CP.local` / `[redacted]` — แจ้งซ่อม + ติดตาม
-- Tech: `tech@CP.local` / `[redacted]` — รับงาน + อัปเดตสถานะ
-- Admin: `admin@CP.local` / `[redacted]` — มอบหมายช่าง + รายงาน + Export CSV
+รหัสผ่านตั้งผ่าน ENV ตอน seed (`SEED_ADMIN_PASSWORD` / `SEED_TECH_PASSWORD` / `SEED_USER_PASSWORD` ใน `.env` ซึ่งไม่ถูก commit) — ดู `prisma/seed.ts`
+- User: `user@jp.local` — แจ้งซ่อม + ติดตาม
+- Tech: `tech@jp.local` — รับงาน + อัปเดตสถานะ
+- Admin: `admin@jp.local` — มอบหมายช่าง + รายงาน + Export CSV
 
 ## ฟีเจอร์ตามวัตถุประสงค์
 1. รับแจ้งเป็นระบบ — ฟอร์มแจ้งซ่อม + เลข HD-YY-XXXX
@@ -25,11 +25,7 @@ npm run dev
 7. เลขทรัพย์สิน — /assets ค้นหา asset_code / tags / serial_number
 
 ## โลโก้
-`public/logo-cp.svg` วาดจากรูป JP ที่แนบมา ใช้บน Sidebar + Login + favicon
+`public/logo/cp-logo.png` ใช้บน Sidebar + Login + favicon
 
-## ย้ายไป SQLite จริง
-```
-npm i prisma @prisma/client
-npx prisma migrate dev --name init
-```
-schema อยู่ที่ `prisma/schema.prisma` fields ตรงกับ `src/lib/store.ts` ทั้งหมด
+## Database
+PostgreSQL ผ่าน Prisma — schema อยู่ที่ `prisma/schema.prisma`, migrate ด้วย `npx prisma migrate deploy`
