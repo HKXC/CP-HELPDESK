@@ -2,12 +2,33 @@
 
 Side Navigation แบบ Toolfolio + ระบบ Helpdesk ครบ flow
 
-## วิธีรัน
+## วิธีรัน (Docker / Vercel — ไม่มี .bat แล้ว)
 ```bash
-# ดับเบิลคลิก E:\HELPDESK 004\run-4502.bat (พอร์ต 4502)
-# หรือรันเอง: npm run dev:4502
+# local ผ่าน Docker DB + Next dev (รันใน helpdesk/)
+docker compose -f ../docker-compose.yml up -d
+npm run dev:4502
 ```
 เปิด http://localhost:4502 → จะเด้งไป `/login`
+- prod ดู `DEPLOY_VERCEL.md` (Neon pooled `DATABASE_URL` + `DIRECT_URL` + `BLOB_READ_WRITE_TOKEN`)
+
+## ติดตั้งบนเครื่องใหม่ (ครั้งแรกครั้งเดียว)
+
+```powershell
+# 1. DB: Docker (ตั้งรหัสก่อน) หรือ native Postgres ที่มีอยู่แล้ว
+$env:POSTGRES_PASSWORD="[ตั้งเอง]"
+docker compose -f ../docker-compose.yml up -d
+
+# 2. .env + migrate + seed (ไฟล์ .env ไม่ถูก commit — ทุกเครื่องสร้างเองจาก .env.example)
+Copy-Item .env.example .env   # ใส่ DATABASE_URL / DIRECT_URL / SEED_ADMIN_PASSWORD / SEED_TECH_PASSWORD / SEED_USER_PASSWORD
+npx prisma migrate deploy
+npx prisma db seed
+
+# 3. รันเว็บ
+npm run dev:4502
+```
+
+- ย้ายเครื่อง: backup โฟลเดอร์ `uploads/` มาด้วย (ไฟล์แนบ local เก็บ binary ในนั้น, DB เก็บแค่ metadata + relative path `uploads/<ticket>/<file>` ที่ย้ายไดรฟ์ได้)
+- เช็ก: `GET /api/health` → `{"status":"ok","db":"connected"}`
 
 ## บัญชีทดสอบ
 รหัสผ่านตั้งผ่าน ENV ตอน seed (`SEED_ADMIN_PASSWORD` / `SEED_TECH_PASSWORD` / `SEED_USER_PASSWORD` ใน `.env` ซึ่งไม่ถูก commit) — ดู `prisma/seed.ts`

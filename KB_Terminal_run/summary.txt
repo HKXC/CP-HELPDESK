@@ -237,8 +237,8 @@ admin ใช้ startsWith)
 5.12 TERMINAL `/terminal` (app/terminal/page.tsx:1-608, ADMIN ล็อกแข็ง)
   - ไม่ใช่ ADMIN = การ์ด "⛔ เข้าถึงได้เฉพาะ ADMIN" + บอก role ตัวเอง
   - หน้าต่าง terminal กว้างสุด 980px: แถบชื่อ (จุดแดงเหลืองเขียว +
-    "CP HELPDESK — ระบบแจ้งซ่อมครุภัณฑ์" + สถานะเชื่อมต่อ localhost:4502
-    กระพริบ) + แถบ tab 4 ปุ่ม (กดแล้ว scroll นิ่มไปบล็อกนั้น)
+    "CP HELPDESK — ระบบแจ้งซ่อมครุภัณฑ์" + สถานะเชื่อมต่อปัจจุบันแบบกระพริบ
+    ไม่ hardcode host) + แถบ tab 4 ปุ่ม (กดแล้ว scroll นิ่มไปบล็อกนั้น)
   - บล็อก status: prompt "helpdesk status" + ตาราง 3 บริการ
     (Dev Server RUNNING / Database CONNECTED/SLOW/DOWN+latency /
     Ticket API OK/SLOW/DOWN+latency) + แถบแดงเมื่อ health พัง

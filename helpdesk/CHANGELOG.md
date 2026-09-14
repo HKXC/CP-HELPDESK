@@ -1,5 +1,22 @@
 # CHANGELOG — CP Helpdesk
 
+## 2026-09-15 — Portable-path + ปิดงานค้าง + API smoke 28/28
+
+- `src/lib/storage.ts`: local disk เก็บ **relative path** (`uploads/<ticket>/<file>`) แทน absolute — ย้ายเครื่อง/ไดรฟ์แล้วแถวเก่าไม่พัง; `getAttachmentBytes` แปลง relative→absolute ตอนรัน + อ่าน absolute เก่าได้เหมือนเดิม (fallback)
+- `SKILL2.md`: decision record ยกเลิก Gap #5 (Operator Console ใน `.bat`) — วิธีรันมาตรฐาน Docker + `dev:4502`, `/terminal` คงเป็น ADMIN read-only
+- Docs sync: `KB_web.md` (root+Terminal_run), `summary.txt`, `KB.md`, `KB_GuildME.md`, `AGENTS.md`, root `README.md` (มีวิธีติดตั้งเครื่องใหม่), `ACCEPTANCE_CHECKLIST.md` (กรอก 21 ข้อ API)
+- ไม่มี `encrypted_content` ในโค้ด (grep ทั้ง repo ไม่เจอ) — สาเหตุย้ายเครื่องไม่ได้ที่พิสูจน์ได้คือ `.env` ไม่ติด git + absolute path + DB ว่าง ซึ่งปิดทั้ง 3 จุดแล้ว (คู่มือย้ายเครื่องใน `README.md`)
+- Verify: `tsc --noEmit` ผ่าน, `npm run build` ผ่าน exit 0 (27 routes), API smoke **28/28** (auth 3 role, users matrix 403/200, tickets scope, create HD-, NEW→CLOSED 400, version 409, internal filter, upload<10MB 201+download ตรง, 11MB→400, hash 3/3, storage relative), lifecycle **8/8** (NEW→…→CLOSED→REOPENED + ผูก asset)
+- หมายเหตุ: มี ticket ทดสอบ `smoke/lifecycle/manual-asset/UNREGISTERED + comment INTERNAL-SMOKE` ค้างใน DB local (ลบได้); ข้อ UI 23,24,26,27 รอผู้ใช้คลิกจริง
+- ไฟล์เปลี่ยนรอบนี้: `src/lib/storage.ts`, `SKILL2.md`, `ACCEPTANCE_CHECKLIST.md`, `KB_web.md`, `KB_Terminal_run/*` (4 ไฟล์), `helpdesk/AGENTS.md`, `helpdesk/README.md`, `README.md` (root), `CHANGELOG.md` (+งานค้างเดิม: attachments route, layout noscript, terminal, track/[id], ลบ run-4502.bat)
+
+## 2026-09-14 — ยกเลิก run-4502.bat (ตามคำสั่งผู้ใช้)
+
+- ลบ `E:\HELPDESK 004\run-4502.bat` ทั้งไฟล์ มาตรฐานรันใหม่ = Docker (`docker-compose.yml` Postgres 17) + `npm run dev:4502` / prod บน Vercel (`DEPLOY_VERCEL.md`)
+- ยกเลิกแผน Operator Console ใน startup script (SKILL2 Gap #5) — `/terminal` ยังเก็บไว้เป็นหน้า ADMIN read-only (health/overview/tickets/logs)
+- ไฟล์ที่แก้รอบนี้: `helpdesk/README.md`, `helpdesk/AGENTS.md`, `KB_web.md`, `ACCEPTANCE_CHECKLIST.md` (ข้อ 21,22,28,29 → N/A + ล้างขยะท้ายไฟล์), `src/app/terminal/page.tsx` (conn-status + svc-meta เลิกอ้าง localhost:4502)
+- Verify รอบนี้: `tsc --noEmit` + `npm run build` ต้องผ่าน (ดูผลด้านล่างหลังเทส)
+
 ## 2026-09-13 — รอบ Vercel deploy prep (F2–F3)
 
 ### F2 — Code changes สำหรับ Vercel ($0 + Neon + Blob)

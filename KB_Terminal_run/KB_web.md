@@ -304,14 +304,8 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 
 **Terminal page (เฟส 5 ✅):** `src/app/terminal/page.tsx` — 4 blocks ข้อมูลจริง, ADMIN-only, empty state, ไม่มี Email
 
-**Startup script:** `E:\HELPDESK 004\run-4502.bat` (**ASCII-only** ทั้งไฟล์ — ห้ามใส่ภาษาไทย/อักขระพิเศษ มิฉะนั้น `cmd.exe` อ่านเพี้ยนแล้วตายก่อนบรรทัดแรก เคยพังจริง 2026-09-13):
-1. Preflight node/npm (ไม่พบ = error ดัง + exit 1)
-2. ตรวจ `DATABASE_URL` ใน `.env` + `npx prisma migrate status` (ล้ม = error ดัง + exit 1, เทสจริง ~12 วินาที `up to date`)
-3. เช็กพอร์ต 4502 — เจอ node เก่า **kill แล้วรันตัวใหม่**
-4. สตาร์ท `npm run dev:4502` เท log `helpdesk\logs\run-4502.log`
-5. รอ Ready สูงสุด 120 วินาที → poll `/api/health` 60 วินาที (ล้ม = error ดัง + exit 1) → เปิดเบราว์เซอร์ `http://localhost:4502` อัตโนมัติ
-- เทส end-to-end 2026-09-13 ✅: ดับเบิลคลิก → 5 ด่านผ่าน → `/api/health` `ok/connected` → เบราว์เซอร์เปิด `/login` 200
-- Dev server ตอนนี้ Running (`GET /login 200`, `/api/health` latency ~2ms ฝั่ง prod-mode)
+**Startup script — ยกเลิกแล้ว 2026-09-14 (ตามคำสั่งผู้ใช้):** `E:\HELPDESK 004\run-4502.bat` ถูกลบทั้งไฟล์ วิธีรันมาตรฐานใหม่ = `docker compose up -d` (Postgres 17) → `npm run dev:4502` ใน `helpdesk/` → เปิด `http://localhost:4502`; prod ดู `DEPLOY_VERCEL.md`
+- ประวัติ (ไม่ต้องทำตามแล้ว): .bat เดิมมี 5 ด่าน (preflight node/npm → ตรวจ `DATABASE_URL` + `migrate status` → kill node เก่าที่ค้างพอร์ต 4502 → สตาร์ท `dev:4502` เท log → poll `/api/health` 60 วินาที) เทส end-to-end ผ่าน 2026-09-13; ข้อควรจำเดิม: ไฟล์ .bat ต้อง ASCII-only (เคยใส่ไทยแล้ว `cmd` พัง)
 
 **Proxy:** `src/proxy.ts` (export default `proxy`, `config.matcher`) — ตรวจ `helpdesk_session` ทุก `/*` (ยกเว้น `/_next`, `/logo`, `favicon`, `*.png/jpg/svg/css/js/woff2`, `PUBLIC_PATHS: /login,/api/auth/login,/api/health`)
 
@@ -344,13 +338,13 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 
 ---
 
-## 13. วิธีรัน
+## 13. วิธีรัน (Docker — ไม่มี .bat แล้ว)
 
-1. ดับเบิลคลิก `E:\HELPDESK 004\run-4502.bat` (หรือ `npm run dev:4502` ใน `helpdesk/`)
-2. รอ `[OK] /api/health ok` (ครั้งแรก compile 60–90 วินาที, ดู progress ใน `helpdesk\logs\run-4502.log`)
-3. เบราว์เซอร์เปิดเอง → `/login` (บัญชีตามข้อ 2.5, รหัสจาก `.env`)
+1. `docker compose -f ../docker-compose.yml up -d` (Postgres 17; ครั้งแรกตั้ง `POSTGRES_PASSWORD` ใน shell ก่อน) — ถ้าใช้ native Postgres ข้ามข้อนี้
+2. ใน `helpdesk/`: ก๊อป `.env.example` เป็น `.env` แล้วใส่ `DATABASE_URL`/`DIRECT_URL` (+ `SEED_*_PASSWORD` ถ้าจะ seed) → `npx prisma migrate deploy` → `npx prisma db seed` (ครั้งแรกครั้งเดียว)
+3. `npm run dev:4502` (ครั้งแรก compile 60–90 วินาที) → เปิด `http://localhost:4502` → `/login` (บัญชีตามข้อ 2.5, รหัสจาก `.env` ของเครื่องนั้น)
 4. ทดสอบ: `GET /api/health` → `{"status":"ok","db":"connected"}`; `GET /terminal` (ADMIN เท่านั้น)
-5. `ERR_CONNECTION_REFUSED` = เซิร์ฟเวอร์ยังไม่รัน กลับไปข้อ 1; `dev.log` ดู `proxy` + `application-code` latency
+5. `ERR_CONNECTION_REFUSED` = เซิร์ฟเวอร์ยังไม่รัน กลับไปข้อ 3
 
 ---
 
@@ -363,7 +357,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 | **3 — API + Auth** | ✅ เสร็จ | 13 endpoints, `httpOnly` cookie, `proxy.ts`, `ticket-service` transaction + optimistic locking | — |
 | **4 — Full Features** | ✅ เสร็จหลัก | ฟอร์ม `contact/department/impact/urgency`, detail แยก `diagnosis/parts` + `is_internal` + confirm-close + comments, `/assets/[id]`, `/admin/users` + sort/pagination, attachments 10MB + authz, ล็อก `/api/users` | `due_at`/SLA UI, รายงานช่วงเวลา/ช่าง, ลด gradient/all-caps (แยกเฟส) |
 | **5 — Terminal** | ✅ เสร็จ | `/terminal` 4 blocks ข้อมูลจริง, `AppShell` Terminal nav, `proxy` | — |
-| **5.1 — Startup script test** | ✅ เสร็จ (2026-09-13) | `run-4502.bat` 5 ด่าน (`DATABASE_URL` + `migrate status` + kill stale + wait + `/api/health`) เทส end-to-end ผ่านถึงเปิดเบราว์เซอร์; **bat ต้อง ASCII-only** (เคยใส่ไทยแล้ว `cmd` พัง) | — |
+| **5.1 — Startup script test** | ⏸️ ยกเลิก 2026-09-14 | เคยเทส end-to-end ผ่าน 2026-09-13 (5 ด่านถึงเปิดเบราว์เซอร์) — .bat ถูกลบแล้ว ไม่ต้องทำตาม | — |
 | **6 — Vercel prep** | ⏳ รอ secret | `prisma generate` ใน build, `engines node 22`, `directUrl`, `src/lib/storage.ts` (Blob/prod + disk/dev), `.env.example`, `DEPLOY_VERCEL.md`, git `main` 2 commits, `tsc`/`build`/`validate` + smoke local + prod-mode proof ผ่าน | Neon 2 URLs + Blob token + push GitHub (F4) |
 
 **ไฟล์สำคัญที่เพิ่ม/แก้ 2026-09-11→12:**

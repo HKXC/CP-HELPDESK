@@ -285,13 +285,10 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 
 ## 10. Operator Console + Startup Script
 
-`E:\HELPDESK 004\run-4502.bat` (UTF-8 with BOM + `chcp 65001`, ASCII banner CP):
-1. Preflight node/npm (ไม่พบ = error ดัง + exit 1)
-2. เช็กพอร์ต 4502 — เจอ node เก่า **kill แล้วรันตัวใหม่**
-3. สตาร์ท `npm run dev:4502` เท log `helpdesk\logs\run-4502.log`
-4. รอ Ready สูงสุด 120 วินาที → เปิดเบราว์เซอร์ `http://localhost:4502` อัตโนมัติ
-- ถ้า DB/migration check ล้ม (หลังมีเฟส 2) ต้อง fail ดัง ห้ามพิมพ์ "server started"
-- Console เป็นของ operator เท่านั้น ห้ามเป็น second source of truth ของข้อมูล
+> ยกเลิกแล้ว 2026-09-14: `run-4502.bat` ถูกลบทั้งไฟล์ (ดูวิธีรันปัจจุบันที่ข้อ 13 ด้านล่าง / `KB_web.md` ที่เป็นปัจจุบันกว่า)
+> ประวัติเดิม (.bat 4 ขั้น — ไม่ต้องทำตามแล้ว):
+> 1. Preflight node/npm 2. เช็กพอร์ต 4502 (kill node เก่าแล้วรันใหม่)
+> 3. สตาร์ท `npm run dev:4502` 4. รอ Ready แล้วเปิดเบราว์เซอร์อัตโนมัติ
 
 ---
 
@@ -321,9 +318,9 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 
 ---
 
-## 13. วิธีรัน
+## 13. วิธีรัน (Docker — ไม่มี .bat แล้ว)
 
-1. ดับเบิลคลิก `E:\HELPDESK 004\run-4502.bat`
-2. รอ `[OK] เซิร์ฟเวอร์ Ready` (ครั้งแรก compile 60–90 วินาที)
-3. เบราว์เซอร์เปิดเอง → `/login` (บัญชีตามข้อ 2.5)
-4. `ERR_CONNECTION_REFUSED` = เซิร์ฟเวอร์ยังไม่รัน กลับไปข้อ 1
+1. `docker compose -f ../docker-compose.yml up -d` (ครั้งแรกตั้ง `POSTGRES_PASSWORD` ก่อน) — native Postgres ข้ามได้
+2. ใน `helpdesk/`: สร้าง `.env` จาก `.env.example` → `npx prisma migrate deploy` → `npx prisma db seed` (ครั้งแรกครั้งเดียว)
+3. `npm run dev:4502` → เปิด `http://localhost:4502` → `/login` (บัญชีตามข้อ 2.5, รหัสจาก `.env` ของเครื่องนั้น)
+4. `ERR_CONNECTION_REFUSED` = เซิร์ฟเวอร์ยังไม่รัน กลับไปข้อ 3

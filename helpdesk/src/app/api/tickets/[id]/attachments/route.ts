@@ -24,8 +24,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (!isQueue) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const form = await req.formData();
-    const file = form.get("file") as File | null;
+    let file: File | null;
+    try {
+      const form = await req.formData();
+      file = form.get("file") as File | null;
+    } catch {
+      // Body เกิน limit ของ server (เช่น >10MB) ทำให้ parse multipart ไม่ได้
+      return NextResponse.json({ error: "ไฟล์ใหญ่เกินกำหนด (สูงสุด 10MB)" }, { status: 400 });
+    }
     if (!file) return NextResponse.json({ error: "File is required" }, { status: 400 });
     if (file.size > MAX_SIZE) return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
 

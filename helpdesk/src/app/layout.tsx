@@ -18,7 +18,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-full antialiased">{children}</body>
+      <body className="min-h-full antialiased">
+        <noscript>
+          <div style={{ padding: "24px", textAlign: "center", fontFamily: "sans-serif" }}>
+            ระบบ CP Helpdesk ต้องเปิดใช้งาน JavaScript จึงจะทำงานได้ — กรุณาเปิด JavaScript แล้วโหลดหน้าใหม่อีกครั้ง
+          </div>
+        </noscript>
+        {children}
+      </body>
     </html>
   );
 }

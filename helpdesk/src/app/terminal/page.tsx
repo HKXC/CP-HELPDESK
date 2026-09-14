@@ -433,7 +433,7 @@ export default function TerminalPage() {
           <div className="title-bar">
             <div className="dots"><span className="dot r"></span><span className="dot y"></span><span className="dot g"></span></div>
             <div className="name"><b>CP HELPDESK</b> — ระบบแจ้งซ่อมครุภัณฑ์</div>
-            <div className="conn-status"><span className="pulse"></span> localhost:4502</div>
+            <div className="conn-status"><span className="pulse"></span> Docker / Vercel</div>
           </div>
 
           <div className="tab-bar" id="tabBar">
@@ -460,8 +460,8 @@ export default function TerminalPage() {
                 <div className="status-grid">
                   <div className="svc">
                     <div className="svc-head"><span className={`svc-dot ${devServerState}`}></span><span className="svc-name">Dev Server</span></div>
-                    <div className="svc-meta">npm run dev:4502</div>
-                    <div className={`svc-state ${devServerState}`}>RUNNING · localhost:4502</div>
+                    <div className="svc-meta">Docker / Vercel deploy</div>
+                    <div className={`svc-state ${devServerState}`}>RUNNING</div>
                   </div>
                   <div className="svc">
                     <div className="svc-head"><span className={`svc-dot ${dbState}`}></span><span className="svc-name">Database</span></div>

@@ -9,7 +9,7 @@
 - หน้าเว็บ 12 หน้า (ทุกหน้าหุ้ม `AppShell` ยกเว้น `/login`)
 - API 15 routes (auth 3 + tickets 5 + assets 2 + attachments 1 + users/overview/health/logs อย่างละ 1)
 - DB 6 ตาราง + 4 enums + `ticket_no_seq` + seed ผู้ใช้ 3 คน + ครุภัณฑ์ 4 ชิ้น
-- รันด้วย `run-4502.bat` พอร์ต 4502 (5 ด่านเช็ก + fail-loud)
+- รันด้วย Docker (Postgres 17) + `npm run dev:4502` / prod บน Vercel (ยกเลิก `run-4502.bat` แล้ว 2026-09-14)
 - เตรียมขึ้น Vercel แล้ว (build ผ่าน 27 routes) — เหลือแค่ secret + push ขึ้น GitHub
 
 ## 2. หน้าเว็บ (12 หน้า — เสร็จทั้งหมด)
@@ -47,16 +47,18 @@
 - Migration: `prisma/migrations/20260912043824_init/migration.sql` (213 บรรทัด)
 - Seed (`prisma/seed.ts`): bcrypt cost 12 จาก ENV `SEED_*_PASSWORD` (ไม่ set = seed ล้ม, ไม่มี plaintext), user 3 คน (`admin/tech/user@jp.local`), asset 4 ชิ้น (`JP-PC-001/PR-012/NB-007/NET-003`), ticket ตัวอย่าง 2 ใบสร้างผ่าน `ticket-service` ให้ history เกิดจาก transaction จริง
 - ทุกเปลี่ยนสถานะเขียน `TicketHistory` + `ActivityLog` ใน transaction เดียวกัน
-- ไฟล์แนบ: metadata ใน DB + binary ลง disk `uploads/<ticket_id>/` (local) หรือ Vercel Blob (prod) ผ่าน `src/lib/storage.ts` — response ตัด `storage_path` ออกแล้ว
+- ไฟล์แนบ: metadata ใน DB + binary ลง disk `uploads/<ticket_id>/` (local, เก็บเป็น **relative path** ย้ายเครื่อง/ไดรฟ์ได้ แถวเก่าที่เป็น absolute ยังอ่านได้) หรือ Vercel Blob (prod) ผ่าน `src/lib/storage.ts` — response ตัด `storage_path` ออกแล้ว
 
 ## 5. Workflow 10 สถานะ (เสร็จทั้งหมด)
 
 `NEW → TRIAGED → ASSIGNED → IN_PROGRESS → WAITING_REQUESTER/WAITING_PARTS → RESOLVED → CLOSED`, แยก `REOPENED` (จาก RESOLVED/CLOSED) และ `CANCELLED` (ทางตัน) — กติกาอยู่ใน `ALLOWED_TRANSITIONS` (`src/lib/ticket-service.ts:55`) + UI ปุ่ม dynamic + timeline + `StatusBadge` 10 สี (มี dot + ตัวอักษร ไม่พึ่งสีอย่างเดียว)
 
-## 6. Startup script + Infra (เสร็จทั้งหมด)
+## 6. Infra — Docker / Vercel (ยกเลิก startup .bat แล้ว 2026-09-14)
 
-- `run-4502.bat` (ASCII-only ห้ามใส่ไทย): [1] เช็ก node/npm → [2] เช็ก `DATABASE_URL` + `prisma migrate status` → [3] kill node เก่าค้างพอร์ต → [4] สตาร์ท `npm run dev:4502` → [5] รอ Ready 120 วิ + poll `/api/health` 60 วิ → เปิดเบราว์เซอร์อัตโนมัติ (ล้มด่านไหน = error ดัง + exit 1)
-- `docker-compose.yml`: Postgres 17 สำรองไว้ (ปัจจุบันใช้ native)
+- วิธีรันมาตรฐาน: `docker compose up -d` (Postgres 17) → `npm run dev:4502` ใน `helpdesk/` → เปิด http://localhost:4502; prod ดู `DEPLOY_VERCEL.md`
+- ติดตั้งบนเครื่องใหม่: ก๊อป `.env.example` → `.env` (ใส่ `DATABASE_URL`/`DIRECT_URL`/`SEED_*_PASSWORD`) → `npx prisma migrate deploy` → `npx prisma db seed` → `npm run dev:4502` (`.env` ไม่ถูก commit ทุกเครื่องสร้างเอง; ย้ายเครื่อง backup `uploads/` มาด้วย)
+- `/terminal` ยังเก็บไว้เป็นหน้า ADMIN read-only (health + overview + tickets 5 ใบ + logs 20 บรรทัด) — ไม่ใช่ startup console อีกต่อไป
+- `docker-compose.yml`: Postgres 17 (วิธีหลัก local); native Postgres เดิมใช้ได้แต่ไม่ใช่ค่าตั้งต้นแล้ว
 - Vercel prep: `build` = `prisma generate && next build`, `engines node 22.x`, `directUrl` (Neon pooler/direct), `src/lib/storage.ts` (Blob/prod + disk/dev), `.env.example` ครบ 6 ตัว, `DEPLOY_VERCEL.md`
 - Verify ที่ผ่านแล้ว: `tsc --noEmit` ผ่าน, `npm run build` ผ่าน 27 routes, smoke local (`/api/health` ok, login 3 roles, tickets/assets/comments, users matrix 403/200), prod-mode `next start` proof ผ่าน
 

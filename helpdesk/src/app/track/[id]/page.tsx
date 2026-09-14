@@ -84,6 +84,8 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
   const [comment, setComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const [assignTo, setAssignTo] = useState("");
+  const [assetCode, setAssetCode] = useState("");
+  const [assetSerial, setAssetSerial] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [me, setMe] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -110,6 +112,8 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
       setWorkPerformed(data.ticket.work_performed || "");
       setPartsUsed(data.ticket.parts_used || "");
       setResolution(data.ticket.resolution || "");
+      setAssetCode(data.ticket.asset_code || "");
+      setAssetSerial(data.ticket.serial_number || "");
       setHistory(data.history || []);
       setAttachments(data.attachments || []);
       if (meRes.ok) setMe(await meRes.json());
@@ -211,6 +215,32 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
     }
   };
 
+  const saveAsset = async () => {
+    setActionError("");
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          asset_code: assetCode.trim() || null,
+          serial_number: assetSerial.trim() || null,
+          version: ticket.version,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setActionError(data.error || "บันทึกครุภัณฑ์ไม่สำเร็จ");
+        return;
+      }
+      await reload();
+    } catch {
+      setActionError("เกิดข้อผิดพลาด");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const assign = async () => {
     if (!assignTo) return;
     setActionError("");
@@ -282,6 +312,10 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
 
   const uploadFile = async (f: File) => {
     setActionError("");
+    if (f.size > 10 * 1024 * 1024) {
+      setActionError("ไฟล์ใหญ่เกินกำหนด (สูงสุด 10MB)");
+      return;
+    }
     setActionLoading(true);
     try {
       const fd = new FormData();
@@ -414,6 +448,16 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
               </div>
               <button onClick={saveSolution} disabled={actionLoading} className="mt-2 rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50" style={{ background: "var(--bg-glass)", border: "1px solid var(--border-medium)", color: "var(--text-secondary)" }}>
                 บันทึกโน้ต
+              </button>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold" style={{ color: "var(--text-secondary)" }}>ผูกครุภัณฑ์ (เลขทรัพย์สิน / Serial)</label>
+              <div className="grid gap-2">
+                <input value={assetCode} onChange={(e) => setAssetCode(e.target.value)} className="glass-input w-full px-3 py-2 text-sm" placeholder="เลขทรัพย์สิน (เช่น JP-PC-001)" />
+                <input value={assetSerial} onChange={(e) => setAssetSerial(e.target.value)} className="glass-input w-full px-3 py-2 text-sm" placeholder="Serial number" />
+              </div>
+              <button onClick={saveAsset} disabled={actionLoading} className="mt-2 rounded-lg px-3 py-1.5 text-xs font-semibold disabled:opacity-50" style={{ background: "var(--bg-glass)", border: "1px solid var(--border-medium)", color: "var(--text-secondary)" }}>
+                บันทึกครุภัณฑ์
               </button>
             </div>
             <div>

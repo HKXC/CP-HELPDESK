@@ -43,7 +43,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **ระบบ:** CP Helpdesk — ระบบแจ้งซ่อม/บริหารจัดการงานซ่อมอุปกรณ์และครุภัณฑ์ IT
 - **โครงสร้าง path:** `E:\HELPDESK 004\helpdesk`
 - **Tech stack:** Next.js 16.3.4 + React 19 + Prisma 6.19.3 + PostgreSQL 17 + bcryptjs
-- **รันด้วย:** `run-4502.bat` (พอร์ต 4502)
+- **รันด้วย:** Docker (`docker-compose.yml` Postgres 17) + `npm run dev:4502` / prod บน Vercel (`DEPLOY_VERCEL.md`) — ยกเลิก `run-4502.bat` แล้ว (2026-09-14)
+- **ติดตั้งเครื่องใหม่:** ก๊อป `.env.example` → `.env` (`.env` ไม่ถูก commit) → `migrate deploy` → `db seed` → `dev:4502` (ดู `README.md`); ไฟล์แนบ local เก็บ relative path `uploads/<ticket>/<file>` ย้ายไดรฟ์ได้
 - **โครงสร้าง UI:** Side Navigation ตามแพทเทิร์นของ `toolfolio.com` (ใช้อ้างอิงเฉพาะโครงสร้าง ห้าม copy branding/เนื้อหา/โค้ดจากเว็บต้นแบบ)
 - **จำนวนแดชบอร์ด/วิว:** 7 วิวหลัก (ดูรายละเอียดใน SKILL2.md § Required Product Shape / Main Screens)
 - **Roles:** 3 บทบาท — Requester, Technician, Administrator (Administrator ครอบคลุมหน้าที่ Supervisor ไปในตัว — **ไม่มี** role Supervisor แยกต่างหาก ตามที่ตกลงไว้ใน `SKILL2.md:109`)
