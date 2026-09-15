@@ -220,9 +220,9 @@ export default function TerminalPage() {
 
   return (
     <AppShell>
-      {/* JetBrains Mono for terminal */}
+      {/* JetBrains Mono for terminal + Noto Sans Thai (Mono/Inter have no Thai glyphs) */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
       <div className="terminal-wrapper">
         <style>{`
@@ -241,8 +241,8 @@ export default function TerminalPage() {
             --green: #4ADE80;
             --amber: #F2B84B;
             --red: #FF6E6E;
-            --mono: 'JetBrains Mono', ui-monospace, monospace;
-            --ui: 'Inter', system-ui, sans-serif;
+            --mono: 'JetBrains Mono', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, ui-monospace, monospace;
+            --ui: 'Inter', 'Noto Sans Thai', 'Leelawadee UI', Tahoma, system-ui, sans-serif;
           }
           .terminal-window{
             width:100%;

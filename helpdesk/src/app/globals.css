@@ -47,7 +47,7 @@
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: "Inter", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
