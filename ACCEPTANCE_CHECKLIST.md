@@ -56,7 +56,7 @@
 | 25 | เช็คว่า password ใน DB เป็น hash | ไม่มี plaintext password หลงเหลือในตาราง users | ✅ ผ่าน | DB: 3/3 ขึ้นต้น bcrypt ($2…) ผ่าน tsx+prisma |
 | 26 | เปิดเว็บทุกหน้า สังเกต animation ตอนโหลด/hover | ไม่มี fade-in/stagger/hover-lift แบบประดับทั่วทุกหน้า เหลือ motion เฉพาะตอนสื่อสารการเปลี่ยนสถานะจริง (บันทึกสำเร็จ, panel เปิด, สถานะเปลี่ยน) | | |
 | 27 | สังเกตหน้าตาโดยรวม (การ์ด/หัวข้อ/ปุ่ม) เทียบกับก่อนแก้ | ไม่ใช่ glass-card+shadow+gradient เหมือนกันหมดทุกที่แบบ generic SaaS — มีความจงใจแยกแต่ละส่วน ยังอ่านง่ายและเป็นระบบเดียวกัน | | |
-| 28 | ~~ดับเบิลคลิก `run-4502.bat` โดยไม่ต้อง login~~ → เปิด `/terminal` (ADMIN) ดู health/overview/logs | N/A — ยกเลิก .bat 2026-09-14 | `/terminal` ยังอยู่แต่ต้อง login ADMIN |
+| 28 | ~~ดับเบิลคลิก `run-4502.bat` โดยไม่ต้อง login~~ → ~~เปิด `/terminal` (ADMIN) ดู health/overview/logs~~ | N/A — ยกเลิก .bat 2026-09-14; `/terminal` เอาออกทั้งหน้า+เมนู 2026-09-15 ตามคำสั่งผู้ใช้ (ดูข้อมูลผ่าน `/admin` แทน) |
 | 29 | ~~ปิด PostgreSQL ก่อนรัน `.bat`~~ → ปิด DB แล้วเปิดเว็บ/`/api/health` | N/A — ยกเลิก .bat 2026-09-14 | เทส fail-loud ผ่าน Docker/health แทน |
 
 ---

@@ -12,9 +12,9 @@ CP HELPDESK — UI/UX FRONTEND STRUCTURE SUMMARY (ฉบับละเอีย
      5.1  / (Dashboard)   5.2  /login   5.3  /new-ticket   5.4  /my-tickets
      5.5  /track          5.6  /track/[id]                5.7  /assets
      5.8  /assets/[id]    5.9  /knowledge                 5.10 /technician
-     5.11 /admin          5.12 /terminal
-  6. แผนที่ลิงก์ข้ามหน้า (UX Flow)
-  7. Design System: Tokens + Reusable Classes + Terminal Theme
+     5.11 /admin
+   6. แผนที่ลิงก์ข้ามหน้า (UX Flow)
+   7. Design System: Tokens + Reusable Classes
   8. Responsive Breakpoints
   9. Motion / Animation Inventory
   10. รูปแบบฟีเจอร์ซ้ำ (Feature Patterns)
@@ -77,15 +77,13 @@ NAV_USER (6, ทุกคนที่ login) — AppShell.tsx:30-37
   /knowledge   คู่มือ / บทความ     (BookOpen)
 NAV_TECH (+1, TECH/ADMIN) — AppShell.tsx:39
   /technician  งานที่ได้รับมอบหมาย (Wrench)
-NAV_ADMIN (+4, ADMIN เท่านั้น) — AppShell.tsx:41-46
+NAV_ADMIN (+3, ADMIN เท่านั้น) — AppShell.tsx
   /admin               จัดการงานทั้งหมด (ShieldCheck)
   /admin?tab=assets    จัดการครุภัณฑ์   (ClipboardList)
   /admin?tab=reports   รายงาน           (BarChart3)
-  /terminal            Terminal         (Terminal)
-รวม: USER เห็น 6 / TECH เห็น 7 / ADMIN เห็น 11
+รวม: USER เห็น 6 / TECH เห็น 7 / ADMIN เห็น 10
 กลุ่มใน sidebar: "เมนูหลัก" (ทุกคน) / "ช่างซ่อม" (TECH+) /
-"ผู้ดูแลระบบ" (ADMIN) — active ดูจาก path (terminal ตรงตัว,
-admin ใช้ startsWith)
+"ผู้ดูแลระบบ" (ADMIN) — active ดูจาก path (admin ใช้ startsWith)
 
 ----------------------------------------------------------------
 4. SHARED UI PRIMITIVES
@@ -234,23 +232,9 @@ admin ใช้ startsWith)
     ชื่อไฟล์ cp-helpdesk-report.csv
   - state: spinner รวม / Empty 3 แบบ (ยังไม่มีงาน/ยังไม่มีข้อมูล/ยังไม่มีผู้ใช้)
 
-5.12 TERMINAL `/terminal` (app/terminal/page.tsx:1-608, ADMIN ล็อกแข็ง)
-  - ไม่ใช่ ADMIN = การ์ด "⛔ เข้าถึงได้เฉพาะ ADMIN" + บอก role ตัวเอง
-  - หน้าต่าง terminal กว้างสุด 980px: แถบชื่อ (จุดแดงเหลืองเขียว +
-    "CP HELPDESK — ระบบแจ้งซ่อมครุภัณฑ์" + สถานะเชื่อมต่อปัจจุบันแบบกระพริบ
-    ไม่ hardcode host) + แถบ tab 4 ปุ่ม (กดแล้ว scroll นิ่มไปบล็อกนั้น)
-  - บล็อก status: prompt "helpdesk status" + ตาราง 3 บริการ
-    (Dev Server RUNNING / Database CONNECTED/SLOW/DOWN+latency /
-    Ticket API OK/SLOW/DOWN+latency) + แถบแดงเมื่อ health พัง
-  - บล็อก overview: prompt "overview --today" + แถวค่า
-    (ทั้งหมด/ใหม่-คัดกรอง/กำลังซ่อม/เสร็จ-ปิด/เกินกำหนด) มีแถบบาร์
-  - บล็อก db: prompt "db --table=tickets --recent 5" + ตาราง 6 คอลัมน์
-    (ID/ครุภัณฑ์/หน่วยงาน/ผู้แจ้ง/สถานะเม็ด/วันที่แจ้ง)
-  - บล็อก errors: prompt "logs --tail 20" + บรรทัด log
-    (เวลา/ระดับ ERROR-WARN-INFO/ข้อความ/แหล่งที่มา)
-  - บรรทัด prompt สด "cp@helpdesk:~/...$ ▊" (เคอร์เซอร์กะพริบ, พิมพ์ไม่ได้)
-  - state: ข้อมูลจริง 100% (health/overview/tickets-5/logs-20),
-    ว่าง = "ยังไม่มีข้อมูล/No logs yet" (ห้ามเลขแต่ง), ขอบเขียว/แดงตามสถานะ
+5.12 TERMINAL `/terminal` — ❌ เอาออกแล้ว 2026-09-15 (ตามคำสั่งผู้ใช้)
+  ลบ `src/app/terminal/page.tsx` + เมนูใน AppShell ทั้งหมด;
+  API health/overview/tickets/logs ยังอยู่ครบ ดูผ่าน `/admin` แทน
 
 ----------------------------------------------------------------
 6. แผนที่ลิงก์ข้ามหน้า (UX FLOW)
@@ -308,24 +292,6 @@ admin ใช้ startsWith)
   .ambient-glow (230-239): วง 600px blur 120px opacity 0.07 fixed
     (AppShell วาง 2 ดวง; login ใช้ radial-gradient 3 ดวงแยกต่างหาก)
 
-7.3 TERMINAL THEME (terminal/page.tsx:228-246, ชุดแยกใน <style>)
-  --void #080C14 / --term-bg #0E1520 / --panel #131B29 /
-  --panel-raised #17202F / --border #223047 / --border-soft #192335 /
-  --text-hi #E3EAF3 / --text-mid #93A2B7 / --text-dim #4C5B72 /
-  --cyan #5EEAD4 / --blue #7DA6FF / --green #4ADE80 /
-  --amber #F2B84B / --red #FF6E6E / --mono JetBrains Mono /
-  --ui Inter (โหลดฟอนต์ซ้ำใน body component)
-  คลาส: .terminal-window (กว้างสุด 980px กลางจอ, เงาดำใหญ่,
-    animation windowIn) / .title-bar (จุด 3 สี 11px + ชื่อ + สถานะ) /
-  .tab-bar/.tab (12.5px, active ขอบล่าง cyan) / .terminal-body
-    (mono, สูงสุด 66vh scroll) / .block (fade ทีละบล็อก delay สลับ) /
-  .prompt-line (13.5px user cyan/path blue) / .output (panel + ขอบซ้าย
-    เขียว/แดงตามสถานะ) / .status-grid (auto-fit min 200px) /
-  .kv-row (label 170px + bar) / .db-table (12.5px) /
-  .pill (10.5px: open แดง/progress เหลือง/closed เขียว/cancelled แดง) /
-  .log-line (เวลา 78px + ระดับ 52px + ข้อความ) / .live-prompt +
-  .cursor กะพริบ / .empty-terminal
-
 ----------------------------------------------------------------
 8. RESPONSIVE BREAKPOINTS (mobile-first, มีแค่ sm/md/lg)
 ----------------------------------------------------------------
@@ -336,10 +302,9 @@ admin ใช้ startsWith)
   (300px + ฉากดำ blur); สลับปุ่ม hamburger/collapse
 - lg (1024px): เนื้อหา 1→3 คอลัมน์ (detail 2+1, assets 2+1, dashboard 2+1,
   ฟอร์มแจ้งซ่อม 2+1), สถิติ 4 คอลัมน์, รายงาน 2 คอลัมน์
-- ไม่มี xl/2xl; custom media query เดียว: terminal ≤640px
-  (label 120px + ตาราง scroll-x)
-- เนื้อหาหลัก cap max-w-6xl (1152px) กลางจอทุกหน้า; terminal cap ซ้อน
-  980px; login กลางจอ max-w-md; input ค้นหา cap max-w-lg
+- ไม่มี xl/2xl; ไม่มี custom media query
+- เนื้อหาหลัก cap max-w-6xl (1152px) กลางจอทุกหน้า;
+  login กลางจอ max-w-md; input ค้นหา cap max-w-lg
 
 ----------------------------------------------------------------
 9. MOTION / ANIMATION INVENTORY
@@ -353,8 +318,7 @@ admin ใช้ startsWith)
 - spinner มาตรฐานทุกหน้า: วง 24/32px ขอบ indigo ปลายโปร่งใสหมุน
 - hover: การ์ดลอย -2px, ปุ่มลอย -1px, ลิงก์ bg-white/5, ปุ่มลบแดงจาง
 - transition: all .3s (glass/btn), 200/300ms (shell), 500ms (progress bar),
-  700ms (กราฟ admin); terminal: windowIn .5s, blockIn .45s สลับ delay,
-  pulse วงเขียว 2.2s, cursor blink 1.05s, tab scroll smooth
+  700ms (กราฟ admin)
 - ไม่มี reduced-motion guard (งานค้างตามสเปก)
 
 ----------------------------------------------------------------
@@ -366,8 +330,8 @@ B. Search-as-you-type vs submit: assets (debounce 300ms) / track+topbar
    (submit/Enter) / my-tickets+admin (ปุ่ม/select)
 C. Status pill + timeline + progress: StatusBadge (10 สี) ใช้ทุกที่ +
    track/[id] ขยายเป็น timeline 10 เม็ด + progress bar
-D. Role-gated UI: ฟอร์มเพิ่ม/ลบ (assets), แผงช่าง (detail), tab admin,
-   terminal (ล็อกแข็ง) — ซ่อนตาม role + บังคับซ้ำฝั่ง API
+D. Role-gated UI: ฟอร์มเพิ่ม/ลบ (assets), แผงช่าง (detail), tab admin
+   — ซ่อนตาม role + บังคับซ้ำฝั่ง API
 E. Optimistic-locking UX: ทุก PATCH ส่ง version, ชน = 409 +
    ข้อความ "Data was modified by another user. Please refresh."
 F. Empty/loading/error มาตรฐาน: spinner indigo / Empty 📭 /
@@ -376,9 +340,7 @@ G. Confirm destructive: window.confirm ก่อน CLOSED (detail) และก
    ครุภัณฑ์ (assets); ผูก ticket = RETIRED แทนลบจริง
 H. CSV export: ปุ่มเดียวใน admin reports (BOM + 10 คอลัมน์)
 I. Test-account shortcuts: ปุ่มกรอกอีเมล 3 role ใน login
-J. Terminal-as-readonly-dashboard: 4 บล็อกข้อมูลจริง + empty state
-   แทนเลขแต่ง (ไม่มีปุ่มแก้ไขใดๆ)
 
 ================================================================
-จบไฟล์ — ที่มา: อ่านโค้ดจริง src/app + src/components (2026-09-13)
+จบไฟล์ — ที่มา: อ่านโค้ดจริง src/app + src/components (2026-09-13, ตัด /terminal ออก 2026-09-15)
 ================================================================

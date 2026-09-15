@@ -46,10 +46,10 @@
 - ตามสเปกปัจจุบัน: ใช้ 3 roles (Requester, Technician, Administrator) — Administrator รวมหน้าที่ triage/Supervisor แล้ว
 - ถ้าปริมาณ triage มากจน ADMIN ได้สิทธิ์เกินควร ค่อยแยก `SUPERVISOR` ใหม่ (SKILL2.md:120)
 
-### 2.4 Administrator (ADMIN) — มีแล้ว (API + Terminal)
+### 2.4 Administrator (ADMIN) — มีแล้ว (API)
 - ดูงานทั้งหมด (`/admin` → `GET /api/tickets?limit=100`), มอบหมาย/เปลี่ยนช่าง (`PATCH ... technician_id`), รายงาน + Export CSV
 - จัดการครุภัณฑ์ (`POST/PATCH/DELETE /api/assets`, `409` เมื่อ `asset_code`/`serial_number` ชน)
-- เข้า Terminal (`/terminal` ADMIN-only, 4 blocks ข้อมูลจริง)
+- เข้า Terminal ~~(`/terminal` ADMIN-only, 4 blocks ข้อมูลจริง)~~ — เอาออกแล้ว 2026-09-15 ตามคำสั่งผู้ใช้ (ดู health/overview/tickets/logs ผ่าน API และ `/admin` แทน)
 - ยังทำไม่ได้: จัดการผู้ใช้/แผนก/หมวดหมู่, ตั้งค่า SLA/retention (รอเฟส 4)
 
 ### 2.5 บัญชีทดสอบ (seed ใน PostgreSQL — bcrypt)
@@ -202,16 +202,9 @@ Map จาก 6 สถานะเดิม: `PENDING→NEW`, `ACCEPTED→ASSIGN
 - ไฟล์: `src/app/admin/page.tsx`
 - ยังขาด: รายงานตามช่วงเวลา/ช่าง/แผนก/SLA, จัดการผู้ใช้/แผนก/หมวดหมู่, sort/pagination (API รองรับ `page/limit/sort/order` แล้ว)
 
-### 6.11 `/terminal` — ✅ สร้างแล้ว (ADMIN-only, เฟส 5)
-- หน้าต่าง terminal ลอยกลางจอ (`--void`/`--term-bg`/`--panel`/`--cyan`/`--green`/`--amber`/`--red`, JetBrains Mono, pulse, tab 4 ปุ่ม)
-- 4 blocks ข้อมูลจริง 100% (ไม่ใช่ fake):
-  1. **status** — `GET /api/health` (DB `connected` + `latency_ms`, Dev Server `RUNNING`, Ticket API latency `ok<500/warn<1000/down`)
-  2. **overview** — `GET /api/overview` (total, `byStatus` 10 ค่า, overdue) + bar `width%`
-  3. **db --recent** — `GET /api/tickets?limit=5` ตาราง (ID/ครุภัณฑ์/หน่วยงาน/ผู้แจ้ง/สถานะ pill/วันที่)
-  4. **logs --tail** — `GET /api/logs?limit=20` (time/level/action/entity/actor, `err` border ถ้ามี error)
-- กฎเหล็ก: ว่าง = empty state ("ยังไม่มีข้อมูล", "No logs yet" ห้ามเลขแต่ง); ไม่มี Email = ตัดแถว Email ทิ้ง (เหลือ 3 svcs)
-- ไฟล์: `src/app/terminal/page.tsx` (client, `AppShell` wrap, `meRole` check `ADMIN` else `⛔ เข้าถึงได้เฉพาะ ADMIN`)
-- API ที่ผูก: `GET /api/health`, `GET /api/overview`, `GET /api/tickets`, `GET /api/logs` (ทั้งหมด ADMIN หรือ auth)
+### 6.11 `/terminal` — ❌ เอาออกแล้ว 2026-09-15 (ตามคำสั่งผู้ใช้ — ลบ `src/app/terminal/` + เมนูใน `AppShell`)
+- เดิม: หน้าต่าง terminal ลอยกลางจอ, 4 blocks ข้อมูลจริง (`status`/`overview`/`db --recent`/`logs --tail`), ADMIN-only
+- ทดแทน: `GET /api/health`, `GET /api/overview`, `GET /api/tickets`, `GET /api/logs` (API คงอยู่ครบ) + หน้า `/admin`
 
 ---
 
@@ -231,12 +224,11 @@ Sidebar (desktop 280px ย่อได้เหลือ 76px / mobile drawer)
 └── ผู้ดูแลระบบ (ADMIN)
     ├── จัดการงานทั้งหมด `/admin`
     ├── รายงาน `/admin?tab=reports`
-    ├── จัดการครุภัณฑ์ `/admin?tab=assets`
-    └── Terminal `/terminal` (ADMIN-only, เฟส 5 ✅)
+    └── จัดการครุภัณฑ์ `/admin?tab=assets`
 Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + badge role + ชื่อผู้ใช้
 ```
 
-ไฟล์: `src/components/AppShell.tsx:29-44` (NAV_USER/TECH/ADMIN + `Terminal` icon), `proxy.ts:1` (redirect `307 → /login` ถ้าไม่มี `helpdesk_session`, `401` สำหรับ `/api/*`)
+ไฟล์: `src/components/AppShell.tsx` (NAV_USER/TECH/ADMIN), `proxy.ts:1` (redirect `307 → /login` ถ้าไม่มี `helpdesk_session`, `401` สำหรับ `/api/*`)
 
 ---
 
@@ -244,8 +236,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 
 - Tokens กลาง: `src/app/globals.css:5-44` (palette/gradient/shadow/radius) +
   คลาส `glass-card`, `glass-card-interactive`, `btn-gradient`, `glass-input`,
-  `glass-select`, animations (`fade-in/slide-up/slide-in-left`, stagger)
-- Tokens Terminal: `src/app/terminal/page.tsx` inline `<style>` (`--void`/`--term-bg`/`--panel`/`--border`/`--cyan`/`--green`/`--amber`/`--red`, `--mono` JetBrains Mono) — แชร์ `ok/warning/error` semantics กับหลัก
+  `  glass-select`, animations (`fade-in/slide-up/slide-in-left`, stagger)
 - คอมโพเนนต์ร่วม: `src/components/ui.tsx` (`PageHeader` หัว gradient,
   `Empty`, `Field`, `Chip`), `src/components/StatusBadge.tsx`
   (badge 10 สี มี dot + ตัวอักษร ไม่พึ่งสีอย่างเดียว)
@@ -302,7 +293,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 
 ## 10. Operator Console + Startup Script
 
-**Terminal page (เฟส 5 ✅):** `src/app/terminal/page.tsx` — 4 blocks ข้อมูลจริง, ADMIN-only, empty state, ไม่มี Email
+**Terminal page — เอาออกแล้ว 2026-09-15 (ตามคำสั่งผู้ใช้):** ลบ `src/app/terminal/page.tsx` + เมนูใน `AppShell` แล้ว ดู health/overview/tickets/logs ผ่าน API routes และ `/admin` แทน
 
 **Startup script — ยกเลิกแล้ว 2026-09-14 (ตามคำสั่งผู้ใช้):** `E:\HELPDESK 004\run-4502.bat` ถูกลบทั้งไฟล์ วิธีรันมาตรฐานใหม่ = `docker compose up -d` (Postgres 17) → `npm run dev:4502` ใน `helpdesk/` → เปิด `http://localhost:4502`; ถ้าให้เครื่องอื่นใน Wi-Fi เดียวกันใช้โดยไม่ต้องลงอะไร รัน `npx next dev --port 4502 -H 0.0.0.0` แล้วเปิด `http://<IP-host>:4502/login` (เช่น `http://10.195.255.147:4502/login` ณ 2026-09-15; ต้องเปิด firewall inbound 4502); prod ดู `DEPLOY_VERCEL.md`
 - ประวัติ (ไม่ต้องทำตามแล้ว): .bat เดิมมี 5 ด่าน (preflight node/npm → ตรวจ `DATABASE_URL` + `migrate status` → kill node เก่าที่ค้างพอร์ต 4502 → สตาร์ท `dev:4502` เท log → poll `/api/health` 60 วินาที) เทส end-to-end ผ่าน 2026-09-13; ข้อควรจำเดิม: ไฟล์ .bat ต้อง ASCII-only (เคยใส่ไทยแล้ว `cmd` พัง)
@@ -326,14 +317,14 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 - [x] มอบหมาย + เปลี่ยนสถานะ + ประวัติแสดง (`PATCH` + `version` + `TicketHistory`)
 - [x] ผูก asset tags/Serial กับใบแจ้ง (`asset_code`/`serial_number`/`asset_id` FK + `GET /api/assets` autocomplete)
 - [x] รายงาน + Export CSV (10 สถานะ, `byCategory`, BOM)
-- [x] Side nav desktop/mobile + build ผ่าน (`npm run build` 27 routes รวม `comments`/`attachments`/`assets/[id]`, ` ○ /terminal` + `ƒ Proxy`)
+- [x] Side nav desktop/mobile + build ผ่าน (`npm run build` 26 routes — เอา `/terminal` ออกแล้ว, `ƒ Proxy`)
 - [x] ย้าย Postgres + migrations + bcrypt (PostgreSQL 17 `helpdesk` DB, `prisma/migrations/20260912043824_init`, `bcrypt` 12, `SEED_*_PASSWORD` ENV, `ticket_no_seq`)
 - [x] API + บังคับสิทธิ์ฝั่ง server + กันเขียนชน (version) (`getSession`/`requireRole` ทุก route, `USER`/`TECH`/`ADMIN` matrix, `version` 409, `is_internal` กรอง)
 - [x] 10 สถานะ + Reopen (`TicketStatus` 10 ค่า, `ALLOWED_TRANSITIONS`, `StatusBadge` 10 สี, `track/[id]` dynamic `nextStatuses` + Reopen `POST .../reopen` + timeline 10 ขั้น)
 - [x] confirm-close + internal notes UI + contact/department (เสร็จ 2026-09-13: ฟอร์ม `contact/department/impact/urgency`, หน้า detail แยก `diagnosis/work_performed/parts_used/resolution` + `is_internal` checkbox + confirm ก่อน CLOSED + comment `POST .../comments`) — คงเหลือ: `due_at`/SLA UI, รายงานตามช่วงเวลา/ช่าง/SLA
 - [x] Supervisor role + จัดการผู้ใช้ — มติ 3 roles (ADMIN รวม Supervisor), มี `/admin/users` + `/assets/[id]` + sort/pagination แล้ว (2026-09-13); ล็อก `GET /api/users` (USER ดูไม่ได้, TECH ดูได้เฉพาะ `?role=TECH|ADMIN`)
 - [x] แนบไฟล์ (เสร็จ 2026-09-13: `POST /api/tickets/[id]/attachments` สูงสุด 10MB + `GET /api/attachments/[id]`, เก็บ disk `uploads/` ฝั่ง local / Vercel Blob ฝั่ง prod ผ่าน `src/lib/storage.ts`, response ไม่รั่ว `storage_path`)
-- [x] `/terminal` ADMIN-only ข้อมูลจริง 100% (`src/app/terminal/page.tsx` 4 blocks: `health`+`overview`+`tickets`+`logs`, empty state, ไม่มี Email, pulse, JetBrains Mono, `proxy` + `AppShell` Terminal nav)
+- [x] `/terminal` ~~ADMIN-only ข้อมูลจริง 100%~~ — เอาออกแล้ว 2026-09-15 (API health/overview/tickets/logs คงอยู่ครบ)
 - [ ] Smoke 50 concurrent + รีวิว 4 role — smoke เดี่ยวผ่าน (login 3 roles, `/api/users` matrix 403/200 ครบ, comment 201 + history งอก, prod-mode `next start` health ok; รอบเย็น 2026-09-15 re-verify: สร้าง `HD-26-0023` → TRIAGED 200, upload/download ตรง 2 รอบรวมหลังแก้ storage, login ผ่าน LAN IP 200), ยังไม่ได้รัน 50 concurrent
 
 ---
@@ -344,7 +335,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 2. ใน `helpdesk/`: ก๊อป `.env.example` เป็น `.env` แล้วใส่ `DATABASE_URL`/`DIRECT_URL` (+ `SEED_*_PASSWORD` ถ้าจะ seed) → `npx prisma migrate deploy` → `npx prisma db seed` (ครั้งแรกครั้งเดียว)
 3. `npm run dev:4502` (ครั้งแรก compile 60–90 วินาที) → เปิด `http://localhost:4502` → `/login` (บัญชีตามข้อ 2.5, รหัสจาก `.env` ของเครื่องนั้น)
 3b. ให้เครื่องอื่นใช้โดยไม่ต้องลงอะไร (2026-09-15): ที่เครื่อง host รัน `npx next dev --port 4502 -H 0.0.0.0` → เครื่องอื่นใน Wi-Fi เดียวกันเปิด `http://<IP-host>:4502/login` (IP ดูด้วย `Get-NetIPAddress`; ถ้าเข้าไม่ได้ให้เปิด firewall inbound พอร์ต 4502)
-4. ทดสอบ: `GET /api/health` → `{"status":"ok","db":"connected"}`; `GET /terminal` (ADMIN เท่านั้น)
+4. ทดสอบ: `GET /api/health` → `{"status":"ok","db":"connected"}` (หน้า `/terminal` เอาออกแล้ว 2026-09-15 — ดูข้อมูลผ่าน `/admin` แทน)
 5. `ERR_CONNECTION_REFUSED` = เซิร์ฟเวอร์ยังไม่รัน กลับไปข้อ 3
 
 ---
@@ -357,7 +348,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 | **2 — PostgreSQL Migration** | ✅ เสร็จ | `postgresql` provider, 10 สถานะ enum, 6 tables + FK + index + `version` + `sequence`, `prisma/seed.ts` bcrypt | — |
 | **3 — API + Auth** | ✅ เสร็จ | 13 endpoints, `httpOnly` cookie, `proxy.ts`, `ticket-service` transaction + optimistic locking | — |
 | **4 — Full Features** | ✅ เสร็จหลัก | ฟอร์ม `contact/department/impact/urgency`, detail แยก `diagnosis/parts` + `is_internal` + confirm-close + comments, `/assets/[id]`, `/admin/users` + sort/pagination, attachments 10MB + authz, ล็อก `/api/users` | `due_at`/SLA UI, รายงานช่วงเวลา/ช่าง, ลด gradient/all-caps (แยกเฟส) |
-| **5 — Terminal** | ✅ เสร็จ | `/terminal` 4 blocks ข้อมูลจริง, `AppShell` Terminal nav, `proxy` | — |
+| **5 — Terminal** | ❌ เอาออก 2026-09-15 | เคยมี `/terminal` 4 blocks ข้อมูลจริง — ลบทั้งหน้า+เมนูตามคำสั่งผู้ใช้, API คงอยู่ | — |
 | **5.1 — Startup script test** | ⏸️ ยกเลิก 2026-09-14 | เคยเทส end-to-end ผ่าน 2026-09-13 (5 ด่านถึงเปิดเบราว์เซอร์) — .bat ถูกลบแล้ว ไม่ต้องทำตาม | — |
 | **6 — Vercel prep** | ⏳ รอ secret + ปิด SSO wall | `prisma generate` ใน build, `engines node 22`, `directUrl`, `src/lib/storage.ts` (Blob/prod + disk/dev — อ่าน disk เฉพาะใต้ `uploads/` + `turbopackIgnore`, ไม่มี build warning), lockfile มี Linux optional binaries, link project `cp-helpdesk` แล้ว, push ถึง `main` แล้ว, `DEPLOY_VERCEL.md` (มีขั้นตอนปิด Deployment Protection) | Neon 2 URLs + Blob token + ปิด Deployment Protection (F4 — `vercel env ls` ยังว่าง, prod เจอกำแพง SSO อยู่ ณ 2026-09-15) |
 
@@ -365,6 +356,6 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 - `docker-compose.yml` (ทางเลือก Docker), `.env` (DATABASE_URL + SEED_*_PASSWORD)
 - `prisma/schema.prisma` (postgresql, 10 statuses, 6 tables), `prisma/migrations/20260912043824_init/migration.sql`, `prisma/seed.ts`
 - `src/lib/prisma.ts`, `src/lib/constants.ts`, `src/lib/auth.ts`, `src/lib/ticket-service.ts`, `src/lib/api-helpers.ts`, `src/proxy.ts` (ex-`middleware.ts`), `src/lib/store.ts` (deprecated re-export)
-- `src/app/api/*` (13 routes), `src/components/StatusBadge.tsx` (10 สี), `src/components/AppShell.tsx` (+Terminal), `src/app/*` (login/page/new-ticket/my-tickets/track/technician/admin/assets — ย้ายเป็น fetch), `src/app/terminal/page.tsx` (ใหม่)
+- `src/app/api/*` (13 routes), `src/components/StatusBadge.tsx` (10 สี), `src/components/AppShell.tsx`, `src/app/*` (login/page/new-ticket/my-tickets/track/technician/admin/assets — ย้ายเป็น fetch)
 - `package.json` (+`tsx`, `db:seed`, `db:reset`, `prisma.seed`)
 

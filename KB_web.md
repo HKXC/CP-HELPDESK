@@ -28,7 +28,6 @@
 | `/knowledge` | static 4 การ์ด (คอม beep/กระดาษติด/Wi-Fi/ทิปแจ้งซ่อม) — อนุมัติให้เก็บถาวรแล้ว |
 | `/technician` | งานของตัวเอง + งานว่าง (NEW/TRIAGED/ASSIGNED), การ์ดกดไป detail |
 | `/admin` | tab งานทั้งหมด (filter วัน + sort + แบ่งหน้า 20 ใบ) / tab รายงาน (กราฟ 10 สถานะ + หมวด + Export CSV มี BOM) / tab ผู้ใช้ (อ่านอย่างเดียว) |
-| `/terminal` | ADMIN-only, 4 blocks ข้อมูลจริง: health + overview + tickets 5 ใบล่าสุด + logs 20 บรรทัด, empty state ชัดเจน |
 
 โครง `AppShell` (`src/components/AppShell.tsx`): เช็ก session ทุกครั้งที่เปลี่ยนหน้า, เมนูตาม role (USER 6 / TECH 7 / ADMIN 11), sidebar ย่อ 280↔76px + drawer มือถือ, topbar มีค้นหา + badge role, ปุ่ม logout
 
@@ -58,7 +57,7 @@
 
 - วิธีรันมาตรฐาน: `docker compose up -d` (Postgres 17) → `npm run dev:4502` ใน `helpdesk/` → เปิด http://localhost:4502; ถ้าจะให้เครื่องอื่นใช้ผ่าน LAN รัน `npx next dev --port 4502 -H 0.0.0.0` แล้วเปิด `http://<IP-host>:4502/login` (เช่น `http://10.195.255.147:4502/login`); prod ดู `DEPLOY_VERCEL.md`
 - ติดตั้งบนเครื่องใหม่: ก๊อป `.env.example` → `.env` (ใส่ `DATABASE_URL`/`DIRECT_URL`/`SEED_*_PASSWORD`) → `npx prisma migrate deploy` → `npx prisma db seed` → `npm run dev:4502` (`.env` ไม่ถูก commit ทุกเครื่องสร้างเอง; ย้ายเครื่อง backup `uploads/` มาด้วย)
-- `/terminal` ยังเก็บไว้เป็นหน้า ADMIN read-only (health + overview + tickets 5 ใบ + logs 20 บรรทัด) — ไม่ใช่ startup console อีกต่อไป
+- `/terminal` เอาออกแล้ว 2026-09-15 ตามคำสั่งผู้ใช้ (ลบ `src/app/terminal/` + เมนูใน `AppShell`) — ดู health/overview/tickets/logs ผ่าน API routes และหน้า `/admin` แทน
 - `docker-compose.yml`: Postgres 17 (วิธีหลัก local); native Postgres เดิมใช้ได้แต่ไม่ใช่ค่าตั้งต้นแล้ว
 - Vercel prep: `build` = `prisma generate && next build`, `engines node 22.x`, `directUrl` (Neon pooler/direct), `src/lib/storage.ts` (Blob/prod + disk/dev — อ่าน disk เฉพาะใต้ `uploads/` + `turbopackIgnore` แล้ว ไม่มี build warning), lockfile มี Linux optional binaries แล้ว (deploy บน Vercel ได้), link project `cp-helpdesk` แล้ว, `DEPLOY_VERCEL.md` (มีขั้นตอนปิด Deployment Protection ด้วย)
 - Verify ที่ผ่านแล้ว: `tsc --noEmit` ผ่าน, `npm run build` ผ่าน 27 routes, smoke local (`/api/health` ok, login 3 roles, tickets/assets/comments, users matrix 403/200), prod-mode `next start` proof ผ่าน; รอบเย็น 2026-09-15 re-verify: login 3 roles + 401/403 matrix ผ่าน, สร้าง `HD-26-0023` → TRIAGED 200, upload/download ตรง 2 รอบ (รวมรอบหลังแก้ storage), login ผ่าน LAN IP 200

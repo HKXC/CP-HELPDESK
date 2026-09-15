@@ -207,11 +207,7 @@ PENDING(รอดำเนินการ) → ACCEPTED(รับเรื่อ
 - ไฟล์: `src/app/admin/page.tsx`
 - ยังขาด: รายงานตามช่วงเวลา/ช่าง/แผนก/SLA, จัดการผู้ใช้ (เฟส 4)
 
-### 6.11 `/terminal` — ยังไม่สร้าง (ADMIN-only ตามแผน)
-- ลอก token/layout จาก `E:\HELPDESK 004\cp-helpdesk-terminal-ui.html` (ม็อกอัพ ข้อมูลปลอม ห้ามใช้จริง)
-- 4 blocks ผูก API จริง: status (`/api/health` วัด ms จริง), overview (`/api/overview`),
-  ตาราง 5 งานล่าสุด (query จริง), logs (จาก `activity_logs` จริง)
-- กฎเหล็ก: ว่าง = empty state ห้ามเลขแต่ง; ไม่มีระบบเมล = ตัดแถว Email ทิ้ง
+### 6.11 `/terminal` — ❌ ยกเลิก (เอาออกแล้ว 2026-09-15 ตามคำสั่งผู้ใช้ — เคยสร้างแล้วลบทั้งหน้า+เมนูทิ้ง)
 
 ---
 
@@ -230,8 +226,7 @@ Sidebar (desktop 280px ย่อได้เหลือ 76px / mobile drawer)
 │   └── งานที่ได้รับมอบหมาย `/technician`
 └── ผู้ดูแลระบบ (ADMIN)
     ├── จัดการงานทั้งหมด `/admin`
-    ├── รายงาน `/admin?tab=reports`
-    └── Terminal `/terminal` (เฟส 5, ADMIN-only)
+    └── รายงาน `/admin?tab=reports`
 Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + badge role + ชื่อผู้ใช้
 ```
 
@@ -313,7 +308,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 - [ ] 10 สถานะ + Reopen + confirm-close + internal notes + contact/department/due_at/SLA
 - [ ] Supervisor role + จัดการผู้ใช้
 - [ ] แนบไฟล์ (metadata + storage + สิทธิ์)
-- [ ] `/terminal` ADMIN-only ข้อมูลจริง 100%
+- [x] ~~`/terminal` ADMIN-only ข้อมูลจริง 100%~~ — เอาออกแล้ว 2026-09-15 ตามคำสั่งผู้ใช้
 - [ ] Smoke 50 concurrent + รีวิว 4 role
 
 ---

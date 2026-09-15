@@ -1,5 +1,13 @@
 # CHANGELOG — CP Helpdesk
 
+## 2026-09-15 (ดึก) — เอาฟีเจอร์ Terminal ออก + ฟอนต์ไทย
+
+- ลบ `/terminal` ทั้งหน้า+เมนูตามคำสั่งผู้ใช้: ลบ `src/app/terminal/` (608 บรรทัด) + ตัด `Terminal` icon/nav/active-case ใน `src/components/AppShell.tsx`; API `health/overview/tickets/logs` คงอยู่ครบ (หน้า `/admin` ใช้อยู่)
+- `SKILL2.md`: decision record ใหม่ทับ 2 มติเดิม (เก็บ `/terminal` ไว้) — ห้ามสร้าง `/terminal` ใหม่โดยไม่มีคำสั่ง
+- ฟอนต์ไทย: `globals.css` + terminal stack เดิมไม่มี fallback ไทย (JetBrains Mono/Inter ไม่มี glyph ไทย) — เพิ่ม `Noto Sans Thai` + `Leelawadee UI`/`Tahoma` (ยืนยันใน CSS ที่เสิร์ฟจริงแล้ว)
+- Docs sync: `KB_web.md` (root+Terminal_run), `KB.md`, `summary.txt`, `KB_GuildME.md` (§4.5), `ACCEPTANCE #28`
+- Verify: `tsc` ผ่าน, `npm run build` ผ่าน (26 routes — ไม่มี `/terminal` แล้ว)
+
 ## 2026-09-15 (เย็น) — LAN mode + Vercel findings + storage scoping + docs sync
 
 - `src/lib/storage.ts`: อ่านไฟล์ disk เฉพาะใต้ `uploads/` + `turbopackIgnore` — build warning หาย (`npm run build` exit 0, 27 routes), upload/download ตรงทั้งก่อนและหลังแก้ (re-verify 2 รอบ)

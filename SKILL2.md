@@ -366,7 +366,9 @@ PostgreSQL is the system of record for this application. All entities defined in
 
 The local startup script (the `.bat` file used to launch the development server, e.g. `run-4502.bat` / `start.bat`) must present an operator console styled like a modern terminal (Warp Terminal reference), instead of a bare `npm run dev` log dump. This console is a developer/operator tool, not an end-user screen, but should share the token system defined in Visual and Interaction Design Direction above.
 
-> **SUPERSEDED 2026-09-14 — decision recorded:** the startup-`.bat` console approach is cancelled per requester order (`run-4502.bat` deleted). Standard local run is Docker (`docker-compose.yml` Postgres 17) + `npm run dev:4502`; prod runs on Vercel (`DEPLOY_VERCEL.md`). The in-app `/terminal` page is kept as an ADMIN-only read-only convenience view (health/overview/tickets/logs). Do not reintroduce a `.bat` console without a new explicit requester decision.
+> **SUPERSEDED 2026-09-14 — decision recorded:** the startup-`.bat` console approach is cancelled per requester order (`run-4502.bat` deleted). Standard local run is Docker (`docker-compose.yml` Postgres 17) + `npm run dev:4502`; prod runs on Vercel (`DEPLOY_VERCEL.md`). Do not reintroduce a `.bat` console without a new explicit requester decision.
+>
+> **SUPERSEDED 2026-09-15 — decision recorded:** the in-app `/terminal` page (ADMIN-only read-only view) is removed per requester order (`src/app/terminal/` deleted, nav entry removed from `AppShell.tsx`). Health/overview/tickets/logs remain available via their API routes and the `/admin` screens. Do not reintroduce a `/terminal` page without a new explicit requester decision.
 
 The console must surface, at startup and/or on demand:
 
@@ -447,7 +449,8 @@ An implementation review found the current application diverges from this specif
    - The `.bat` script (`run-4502.bat`) itself must render the Warp-Terminal-style status/overview/DB data/errors console (or launch a local CLI process that does) before or while starting the dev server — this must work even if no one has logged into the web app.
    - Decide whether the existing `/terminal` web page is kept as an additional in-app convenience view for ADMIN (sharing the same token system, read-only, same data source) or retired now that the real console lives in the startup script — do not leave it as the *only* place the console appears.
    - Whichever data-fetching logic already exists for `/terminal` (health/overview/tickets/logs) may be reused/exposed for the script-based console rather than rewritten from scratch — this is a wiring change, not new business logic.
-   - **SUPERSEDED 2026-09-14:** per requester order the script-based console is cancelled (see the supersede note under § Operator Console and Startup Script). `/terminal` stays as the ADMIN-only read-only view; no `.bat` work remains.
+    - **SUPERSEDED 2026-09-14:** per requester order the script-based console is cancelled (see the supersede note under § Operator Console and Startup Script).
+    - **SUPERSEDED 2026-09-15:** per requester order the `/terminal` web page itself is removed (`src/app/terminal/` deleted, nav entry removed); no `.bat` or `/terminal` console work remains. Health/overview/tickets/logs stay available via API routes and `/admin` screens.
 
 6. **Internal notes visibility** — work notes and resolution content are currently visible to all roles; this spec requires requester-visible content to be separated from staff-only internal notes (see Repair Request Detail and Auditability and History). Add an `is_internal` flag (or equivalent) to notes/history entries and enforce it at the query layer, not just in the UI.
 7. **Password storage** — see the hashing requirement under Data and Security Expectations above; migrate any existing plaintext credentials as part of the PostgreSQL migration, forcing a password reset rather than hashing unknown legacy values blindly if they cannot be confirmed as plaintext with confidence.

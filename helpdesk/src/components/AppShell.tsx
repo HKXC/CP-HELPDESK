@@ -16,7 +16,6 @@ import {
   Menu,
   X,
   ClipboardList,
-  Terminal,
 } from "lucide-react";
 
 interface User {
@@ -42,7 +41,6 @@ const NAV_ADMIN = [
   { href: "/admin", label: "จัดการงานทั้งหมด", icon: ShieldCheck },
   { href: "/admin?tab=assets", label: "จัดการครุภัณฑ์", icon: ClipboardList },
   { href: "/admin?tab=reports", label: "รายงาน", icon: BarChart3 },
-  { href: "/terminal", label: "Terminal", icon: Terminal },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -208,7 +206,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 href={m.href}
                 label={m.label}
                 icon={m.icon}
-                active={m.href === "/terminal" ? path === "/terminal" : path.startsWith("/admin")}
+                active={path.startsWith("/admin")}
                 collapsed={collapsed}
                 onClick={() => setMobileOpen(false)}
               />
