@@ -8,11 +8,12 @@
    - `DATABASE_URL` = pooled (`...@ep-xxx-pooler...:6543/...?sslmode=require`)
    - `DIRECT_URL` = direct (`...@ep-xxx...:5432/...?sslmode=require`)
 2. **Vercel**: สร้าง Blob store → ก๊อป `BLOB_READ_WRITE_TOKEN`
-3. **Vercel project**: import repo นี้ → Environment → ใส่ 3 ค่า
+3. **Vercel project**: `cp-helpdesk` มีอยู่แล้ว (scope `chatphot182007-8931s-projects`, local link ไว้แล้ว) → import/ใช้ตัวเดิม อย่าสร้างซ้ำ → Environment → ใส่ 3 ค่า
    - `DATABASE_URL=[pooled]`
    - `DIRECT_URL=[direct]`
    - `BLOB_READ_WRITE_TOKEN=[token]`
    - (ไม่ต้องใส่ `SEED_*` บน Vercel)
+4. **ปิด Deployment Protection** (สำคัญ — แอปมีหน้า login ของตัวเองอยู่แล้ว): Dashboard → project → Settings → Deployment Protection → **Disabled** ไม่เช่นนั้นทุกคนจะเจอกำแพง login ของ Vercel ก่อนถึงหน้า `/login` ของแอป
 
 ## 1. Push โค้ดขึ้น GitHub (repo root คือ `E:\HELPDESK 004`)
 
