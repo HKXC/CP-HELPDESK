@@ -48,7 +48,10 @@ export async function getAttachmentBytes(storagePath: string): Promise<Buffer> {
     return Buffer.from(await res.arrayBuffer());
   }
   // Back-compat: rows written before the portable-path change hold absolute
-  // paths — use as-is; new rows are relative and resolve under cwd.
-  const abs = isAbsolute(storagePath) ? storagePath : join(process.cwd(), storagePath);
+  // paths — use as-is; new rows are relative and resolve under uploads/ only.
+  // turbopackIgnore keeps the trace scoped so Vercel doesn't bundle the repo.
+  const abs = isAbsolute(storagePath)
+    ? storagePath
+    : join(/*turbopackIgnore: true*/ process.cwd(), "uploads", storagePath.replace(/^uploads[\/\\]/, ""));
   return readFile(abs);
 }
