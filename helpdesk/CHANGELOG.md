@@ -1,5 +1,15 @@
 # CHANGELOG — CP Helpdesk
 
+## 2026-09-15 (เย็น) — LAN mode + Vercel findings + storage scoping + docs sync
+
+- `src/lib/storage.ts`: อ่านไฟล์ disk เฉพาะใต้ `uploads/` + `turbopackIgnore` — build warning หาย (`npm run build` exit 0, 27 routes), upload/download ตรงทั้งก่อนและหลังแก้ (re-verify 2 รอบ)
+- LAN mode: รัน `npx next dev --port 4502 -H 0.0.0.0` → เครื่องอื่นใน Wi-Fi เดียวกันเปิด `http://10.195.255.147:4502/login` ได้โดยไม่ต้องลงอะไร (login ผ่าน IP 200; firewall inbound 4502 ยังไม่เปิด — ไม่มีสิทธิ์ admin)
+- Vercel: link project `cp-helpdesk` แล้ว (`vercel env ls` ว่าง — ไม่มี env เลย), deployment ล่าสุด Ready แต่ติดกำแพง SSO (Deployment Protection เปิดอยู่) + ขาด `DATABASE_URL`/`DIRECT_URL`/`BLOB_READ_WRITE_TOKEN` — วิธีแก้อยู่ใน `DEPLOY_VERCEL.md` (ปิด Protection + ใส่ env)
+- Login investigation: API login 3 roles 200 ปกติ ปัญหาอยู่ที่ผู้ใช้ (ปุ่มลัดกรอกแค่ email + ล้างช่องรหัส ต้องพิมพ์รหัสจาก `.env` เอง) — ไม่ต้องแก้โค้ด
+- Docs sync: `KB_web.md` (root+Terminal_run), `KB_GuildME.md` (+วิธี LAN), `ACCEPTANCE_CHECKLIST.md` (notes รอบเย็นข้อ 2/6 + test data ค้าง), `DEPLOY_VERCEL.md` (SSO-wall + env)
+- หมายเหตุ: test data ค้างใน DB local เพิ่ม — `HD-26-0023` (TRIAGED) + ไฟล์ `smoke.txt`/`fresh.txt` (ลบได้); `SKILL2.md` ไม่แตะ (เป็นสเปก — ยังไม่มีมติใหม่)
+- ไฟล์เปลี่ยนรอบนี้: `src/lib/storage.ts`, `helpdesk/.gitignore` (dedupe หลัง `vercel link`), `DEPLOY_VERCEL.md`, `KB_web.md`, `KB_Terminal_run/*` (2 ไฟล์), `ACCEPTANCE_CHECKLIST.md`, `CHANGELOG.md`
+
 ## 2026-09-15 — Portable-path + ปิดงานค้าง + API smoke 28/28
 
 - `src/lib/storage.ts`: local disk เก็บ **relative path** (`uploads/<ticket>/<file>`) แทน absolute — ย้ายเครื่อง/ไดรฟ์แล้วแถวเก่าไม่พัง; `getAttachmentBytes` แปลง relative→absolute ตอนรัน + อ่าน absolute เก่าได้เหมือนเดิม (fallback)

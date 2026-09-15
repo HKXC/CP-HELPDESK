@@ -2,7 +2,7 @@
 
 > เอกสารกลางรวมทุกอย่างของระบบ: วัตถุประสงค์, ฟีเจอร์ละเอียดรายหน้า,
 > ข้อมูล, workflow, สิทธิ์, สถานะงานจริง, ของที่ทำแล้ว/ของที่ค้าง
-> อัปเดตล่าสุด: 2026-09-13 • ไฟล์นี้เป็น **as-built + spec** คู่กับ `SKILL2.md` (สัญญา DoD)
+> อัปเดตล่าสุด: 2026-09-15 (เย็น) • ไฟล์นี้เป็น **as-built + spec** คู่กับ `SKILL2.md` (สัญญา DoD)
 
 ---
 
@@ -304,7 +304,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 
 **Terminal page (เฟส 5 ✅):** `src/app/terminal/page.tsx` — 4 blocks ข้อมูลจริง, ADMIN-only, empty state, ไม่มี Email
 
-**Startup script — ยกเลิกแล้ว 2026-09-14 (ตามคำสั่งผู้ใช้):** `E:\HELPDESK 004\run-4502.bat` ถูกลบทั้งไฟล์ วิธีรันมาตรฐานใหม่ = `docker compose up -d` (Postgres 17) → `npm run dev:4502` ใน `helpdesk/` → เปิด `http://localhost:4502`; prod ดู `DEPLOY_VERCEL.md`
+**Startup script — ยกเลิกแล้ว 2026-09-14 (ตามคำสั่งผู้ใช้):** `E:\HELPDESK 004\run-4502.bat` ถูกลบทั้งไฟล์ วิธีรันมาตรฐานใหม่ = `docker compose up -d` (Postgres 17) → `npm run dev:4502` ใน `helpdesk/` → เปิด `http://localhost:4502`; ถ้าให้เครื่องอื่นใน Wi-Fi เดียวกันใช้โดยไม่ต้องลงอะไร รัน `npx next dev --port 4502 -H 0.0.0.0` แล้วเปิด `http://<IP-host>:4502/login` (เช่น `http://10.195.255.147:4502/login` ณ 2026-09-15; ต้องเปิด firewall inbound 4502); prod ดู `DEPLOY_VERCEL.md`
 - ประวัติ (ไม่ต้องทำตามแล้ว): .bat เดิมมี 5 ด่าน (preflight node/npm → ตรวจ `DATABASE_URL` + `migrate status` → kill node เก่าที่ค้างพอร์ต 4502 → สตาร์ท `dev:4502` เท log → poll `/api/health` 60 วินาที) เทส end-to-end ผ่าน 2026-09-13; ข้อควรจำเดิม: ไฟล์ .bat ต้อง ASCII-only (เคยใส่ไทยแล้ว `cmd` พัง)
 
 **Proxy:** `src/proxy.ts` (export default `proxy`, `config.matcher`) — ตรวจ `helpdesk_session` ทุก `/*` (ยกเว้น `/_next`, `/logo`, `favicon`, `*.png/jpg/svg/css/js/woff2`, `PUBLIC_PATHS: /login,/api/auth/login,/api/health`)
@@ -334,7 +334,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 - [x] Supervisor role + จัดการผู้ใช้ — มติ 3 roles (ADMIN รวม Supervisor), มี `/admin/users` + `/assets/[id]` + sort/pagination แล้ว (2026-09-13); ล็อก `GET /api/users` (USER ดูไม่ได้, TECH ดูได้เฉพาะ `?role=TECH|ADMIN`)
 - [x] แนบไฟล์ (เสร็จ 2026-09-13: `POST /api/tickets/[id]/attachments` สูงสุด 10MB + `GET /api/attachments/[id]`, เก็บ disk `uploads/` ฝั่ง local / Vercel Blob ฝั่ง prod ผ่าน `src/lib/storage.ts`, response ไม่รั่ว `storage_path`)
 - [x] `/terminal` ADMIN-only ข้อมูลจริง 100% (`src/app/terminal/page.tsx` 4 blocks: `health`+`overview`+`tickets`+`logs`, empty state, ไม่มี Email, pulse, JetBrains Mono, `proxy` + `AppShell` Terminal nav)
-- [ ] Smoke 50 concurrent + รีวิว 4 role — smoke เดี่ยวผ่าน (login 3 roles, `/api/users` matrix 403/200 ครบ, comment 201 + history งอก, prod-mode `next start` health ok), ยังไม่ได้รัน 50 concurrent
+- [ ] Smoke 50 concurrent + รีวิว 4 role — smoke เดี่ยวผ่าน (login 3 roles, `/api/users` matrix 403/200 ครบ, comment 201 + history งอก, prod-mode `next start` health ok; รอบเย็น 2026-09-15 re-verify: สร้าง `HD-26-0023` → TRIAGED 200, upload/download ตรง 2 รอบรวมหลังแก้ storage, login ผ่าน LAN IP 200), ยังไม่ได้รัน 50 concurrent
 
 ---
 
@@ -343,6 +343,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 1. `docker compose -f ../docker-compose.yml up -d` (Postgres 17; ครั้งแรกตั้ง `POSTGRES_PASSWORD` ใน shell ก่อน) — ถ้าใช้ native Postgres ข้ามข้อนี้
 2. ใน `helpdesk/`: ก๊อป `.env.example` เป็น `.env` แล้วใส่ `DATABASE_URL`/`DIRECT_URL` (+ `SEED_*_PASSWORD` ถ้าจะ seed) → `npx prisma migrate deploy` → `npx prisma db seed` (ครั้งแรกครั้งเดียว)
 3. `npm run dev:4502` (ครั้งแรก compile 60–90 วินาที) → เปิด `http://localhost:4502` → `/login` (บัญชีตามข้อ 2.5, รหัสจาก `.env` ของเครื่องนั้น)
+3b. ให้เครื่องอื่นใช้โดยไม่ต้องลงอะไร (2026-09-15): ที่เครื่อง host รัน `npx next dev --port 4502 -H 0.0.0.0` → เครื่องอื่นใน Wi-Fi เดียวกันเปิด `http://<IP-host>:4502/login` (IP ดูด้วย `Get-NetIPAddress`; ถ้าเข้าไม่ได้ให้เปิด firewall inbound พอร์ต 4502)
 4. ทดสอบ: `GET /api/health` → `{"status":"ok","db":"connected"}`; `GET /terminal` (ADMIN เท่านั้น)
 5. `ERR_CONNECTION_REFUSED` = เซิร์ฟเวอร์ยังไม่รัน กลับไปข้อ 3
 
@@ -358,7 +359,7 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 | **4 — Full Features** | ✅ เสร็จหลัก | ฟอร์ม `contact/department/impact/urgency`, detail แยก `diagnosis/parts` + `is_internal` + confirm-close + comments, `/assets/[id]`, `/admin/users` + sort/pagination, attachments 10MB + authz, ล็อก `/api/users` | `due_at`/SLA UI, รายงานช่วงเวลา/ช่าง, ลด gradient/all-caps (แยกเฟส) |
 | **5 — Terminal** | ✅ เสร็จ | `/terminal` 4 blocks ข้อมูลจริง, `AppShell` Terminal nav, `proxy` | — |
 | **5.1 — Startup script test** | ⏸️ ยกเลิก 2026-09-14 | เคยเทส end-to-end ผ่าน 2026-09-13 (5 ด่านถึงเปิดเบราว์เซอร์) — .bat ถูกลบแล้ว ไม่ต้องทำตาม | — |
-| **6 — Vercel prep** | ⏳ รอ secret | `prisma generate` ใน build, `engines node 22`, `directUrl`, `src/lib/storage.ts` (Blob/prod + disk/dev), `.env.example`, `DEPLOY_VERCEL.md`, git `main` 2 commits, `tsc`/`build`/`validate` + smoke local + prod-mode proof ผ่าน | Neon 2 URLs + Blob token + push GitHub (F4) |
+| **6 — Vercel prep** | ⏳ รอ secret + ปิด SSO wall | `prisma generate` ใน build, `engines node 22`, `directUrl`, `src/lib/storage.ts` (Blob/prod + disk/dev — อ่าน disk เฉพาะใต้ `uploads/` + `turbopackIgnore`, ไม่มี build warning), lockfile มี Linux optional binaries, link project `cp-helpdesk` แล้ว, push ถึง `main` แล้ว, `DEPLOY_VERCEL.md` (มีขั้นตอนปิด Deployment Protection) | Neon 2 URLs + Blob token + ปิด Deployment Protection (F4 — `vercel env ls` ยังว่าง, prod เจอกำแพง SSO อยู่ ณ 2026-09-15) |
 
 **ไฟล์สำคัญที่เพิ่ม/แก้ 2026-09-11→12:**
 - `docker-compose.yml` (ทางเลือก Docker), `.env` (DATABASE_URL + SEED_*_PASSWORD)
