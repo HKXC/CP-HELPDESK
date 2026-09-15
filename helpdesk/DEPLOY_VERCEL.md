@@ -14,12 +14,15 @@
    - `BLOB_READ_WRITE_TOKEN=[token]`
    - (ไม่ต้องใส่ `SEED_*` บน Vercel)
 
-## 1. Push โค้ดขึ้น GitHub (รันใน `E:\HELPDESK 004\helpdesk`)
+## 1. Push โค้ดขึ้น GitHub (repo root คือ `E:\HELPDESK 004`)
 
 ```powershell
-git remote add origin https://github.com/[user]/[repo].git
-git push -u origin main
+# remote ตั้งไว้แล้ว: https://github.com/HKXC/CP-HELPDESK.git
+git push origin main
 ```
+
+> ตอน import ใน Vercel dashboard ตั้ง **Root Directory = `helpdesk`**
+> (repo root มี docs + docker-compose ส่วนแอป Next.js อยู่ใน subdir `helpdesk/`)
 
 ## 2. Migrate + Seed DB prod (รันจากเครื่องนี้ครั้งเดียว ห้ามใส่รหัสในไฟล์)
 
