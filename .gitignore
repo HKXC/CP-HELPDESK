@@ -3,6 +3,7 @@
 
 # secrets — NEVER commit
 helpdesk/.env*
+!helpdesk/.env.example
 
 # attachment binaries + local runtime logs (metadata in DB only)
 helpdesk/uploads/
