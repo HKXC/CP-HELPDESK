@@ -1,6 +1,7 @@
 # KB_web — งานที่ทำไปแล้ว (as-built จริงจากโค้ด)
 
-> อัปเดต: 2026-09-15 (เย็น) • อ่านจากโค้ดจริงใน `helpdesk/src` + `prisma/` + `CHANGELOG.md`
+> อัปเดต: 2026-09-16 • อ่านจากโค้ดจริงใน `helpdesk/src` + `prisma/` + `CHANGELOG.md`
+> รอบนี้: บันทึกแผน Portable ที่อนุมัติแล้ว (setup.ps1 + `.env.example` default + รองรับทุก DB/เว็บ Vercel-domain + ห้าม hardcode) — โค้ดยังไม่ implement, test ข้อ 30–37 ยังไม่รัน
 > ไฟล์นี้ตอบคำถามเดียว: **อะไรทำเสร็จแล้วบ้าง** (ไม่รวมสเปก/แผน)
 
 ## 1. ภาพรวมที่เสร็จแล้ว
@@ -12,6 +13,7 @@
 - รันด้วย Docker (Postgres 17) + `npm run dev:4502` / prod บน Vercel (ยกเลิก `run-4502.bat` แล้ว 2026-09-14)
 - เครื่องอื่นใน Wi-Fi เดียวกันเปิดผ่าน LAN ได้เลยไม่ต้องลงอะไร: รัน `npx next dev --port 4502 -H 0.0.0.0` ที่ `http://10.195.255.147:4502/login` (IP ของเครื่อง host ณ 2026-09-15, ถ้า IP เปลี่ยนให้เช็กด้วย `Get-NetIPAddress`; ต้องเปิด firewall inbound 4502 ถ้าเข้าไม่ได้)
 - เตรียมขึ้น Vercel แล้ว (build ผ่าน 27 routes, push ถึง `main` แล้ว, link project `cp-helpdesk` แล้ว) — ติด 2 อย่าง: Deployment Protection เปิดอยู่ (ต้อง Disabled) + ยังไม่มี env (`DATABASE_URL`/`DIRECT_URL`/`BLOB_READ_WRITE_TOKEN` จาก Neon/Vercel — ดู `DEPLOY_VERCEL.md`)
+- Portable (สถานะ 2026-09-16): `.env.example` กลับมา tracked แล้ว (commit `51a45cc` — ก่อนหน้านี้โดน `.gitignore` กลืน); secret จริงไม่มีใน repo (grep 2026-09-16 เจอแค่ demo `*@jp.local` + ชื่อฟิลด์); แผน `setup.ps1`/`check.ps1` + `.env.example` default local + รองรับ DB ทุกแบบ (Docker/native/Neon/on-prem) + เว็บบน Vercel/domain service อนุมัติแล้ว ยังไม่ implement (test ข้อ 30–37 ใน `ACCEPTANCE_CHECKLIST.md` ยังไม่รัน)
 
 ## 2. หน้าเว็บ (12 หน้า — เสร็จทั้งหมด)
 
@@ -59,12 +61,14 @@
 - ติดตั้งบนเครื่องใหม่: ก๊อป `.env.example` → `.env` (ใส่ `DATABASE_URL`/`DIRECT_URL`/`SEED_*_PASSWORD`) → `npx prisma migrate deploy` → `npx prisma db seed` → `npm run dev:4502` (`.env` ไม่ถูก commit ทุกเครื่องสร้างเอง; ย้ายเครื่อง backup `uploads/` มาด้วย)
 - `/terminal` เอาออกแล้ว 2026-09-15 ตามคำสั่งผู้ใช้ (ลบ `src/app/terminal/` + เมนูใน `AppShell`) — ดู health/overview/tickets/logs ผ่าน API routes และหน้า `/admin` แทน
 - `docker-compose.yml`: Postgres 17 (วิธีหลัก local); native Postgres เดิมใช้ได้แต่ไม่ใช่ค่าตั้งต้นแล้ว
+- 2026-09-16: `.env.example` tracked แล้ว (`51a45cc` — แก้ `.gitignore` เพิ่ม `!.env.example`); `.env`/`.env.local` ยัง ignored ถูกต้อง; กฎ portable — DB ทุกแบบผ่าน env เท่านั้น (local ใส่ `DATABASE_URL`=`DIRECT_URL`, Neon ใส่ pooled `:6543`/direct `:5432`), web บน Vercel (`Root Directory=helpdesk`) หรือ domain service (`build` + `start -p $PORT`, `NODE_ENV=production`), `PORT` override ได้, setup เครื่องใหม่ด้วย `setup.ps1` (แผนอนุมัติแล้ว ยังไม่ implement)
 - Vercel prep: `build` = `prisma generate && next build`, `engines node 22.x`, `directUrl` (Neon pooler/direct), `src/lib/storage.ts` (Blob/prod + disk/dev — อ่าน disk เฉพาะใต้ `uploads/` + `turbopackIgnore` แล้ว ไม่มี build warning), lockfile มี Linux optional binaries แล้ว (deploy บน Vercel ได้), link project `cp-helpdesk` แล้ว, `DEPLOY_VERCEL.md` (มีขั้นตอนปิด Deployment Protection ด้วย)
 - Verify ที่ผ่านแล้ว: `tsc --noEmit` ผ่าน, `npm run build` ผ่าน 27 routes, smoke local (`/api/health` ok, login 3 roles, tickets/assets/comments, users matrix 403/200), prod-mode `next start` proof ผ่าน; รอบเย็น 2026-09-15 re-verify: login 3 roles + 401/403 matrix ผ่าน, สร้าง `HD-26-0023` → TRIAGED 200, upload/download ตรง 2 รอบ (รวมรอบหลังแก้ storage), login ผ่าน LAN IP 200
 
 ## 7. ของที่ยังไม่ทำ (สั้นๆ — รายละเอียดดู SKILL2.md § Known Gaps)
 
 1. Neon `DATABASE_URL` + `DIRECT_URL` + `BLOB_READ_WRITE_TOKEN` ยังไม่ได้จากผู้ใช้ + ปิด Deployment Protection บน project `cp-helpdesk` (โค้ด push + link แล้ว — ดู `DEPLOY_VERCEL.md`)
+2. Portable implement ค้าง (แผนอนุมัติ 2026-09-16): `setup.ps1`/`check.ps1`, `.env.example` default local (`change-me-*`), `PORT` override ใน `package.json`, docs 3 ทาง (Docker/native/Neon) + domain service — test ข้อ 30–37 ยังไม่รัน
 2. Smoke 50 concurrent + รีวิว 4 role ยังไม่ได้รัน (smoke เดี่ยวผ่านแล้ว)
 3. `due_at`/SLA UI + รายงานตามช่วงเวลา/ช่าง (DB มีฟิลด์แล้ว)
 4. ลด gradient/all-caps/animation ประดับตามสเปก (แยกเป็นรอบ design โดยเฉพาะ ไม่รวมกับฟีเจอร์)

@@ -8,8 +8,20 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, password } = body as { email?: string; password?: string };
 
-    if (!email?.trim() || !password) {
-      return NextResponse.json({ error: "Email and password required" }, { status: 400 });
+    if (!email?.trim() && !password) {
+      return NextResponse.json(
+        { error: "กรุณากรอกอีเมลและรหัสผ่าน (รหัสบัญชีทดสอบดูในไฟล์ helpdesk/.env บรรทัด SEED_*_PASSWORD)" },
+        { status: 400 }
+      );
+    }
+    if (!email?.trim()) {
+      return NextResponse.json({ error: "กรุณากรอกอีเมล" }, { status: 400 });
+    }
+    if (!password) {
+      return NextResponse.json(
+        { error: "กรุณากรอกรหัสผ่าน (รหัสบัญชีทดสอบดูในไฟล์ helpdesk/.env บรรทัด SEED_*_PASSWORD)" },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({ where: { email: email.trim() } });

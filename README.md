@@ -21,3 +21,9 @@ npm run dev:4502   # เปิด http://localhost:4502 → /login
 > `.env` ไม่ถูก commit (ดู `.gitignore`) — ทุกเครื่องต้องสร้างเองจาก `.env.example`.
 > ไฟล์แนบเก็บแค่ metadata ใน DB + binary ใน `uploads/` (local) หรือ Vercel Blob (prod) — ย้ายเครื่องให้ backup `uploads/` เอง.
 > prod ดู `helpdesk/DEPLOY_VERCEL.md`.
+
+## ติดตั้งแบบ offline (เครื่องเป้าหมายไม่มีเน็ต — หิ้ว USB ไป)
+
+บนเครื่องที่มีเน็ต (repo นี้): `powershell -ExecutionPolicy Bypass -File make-bundle.ps1`
+→ ได้ bundle ที่ `%TEMP%\opencode\helpdesk-bundle` (repo + `node_modules` ~1GB, **ไม่มี secret**)
+ก๊อปลง USB (≥2GB) พร้อม installer 2 ตัว: Node 22 LTS + PostgreSQL 17 (x64) แล้วทำตาม `README-OFFLINE.txt` ใน bundle (สรุป: ติดตั้ง 2 ตัว → สร้าง DB/user → `setup.ps1` → `setup.ps1 -Start`).

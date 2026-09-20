@@ -2,7 +2,8 @@
 
 > เอกสารกลางรวมทุกอย่างของระบบ: วัตถุประสงค์, ฟีเจอร์ละเอียดรายหน้า,
 > ข้อมูล, workflow, สิทธิ์, สถานะงานจริง, ของที่ทำแล้ว/ของที่ค้าง
-> อัปเดตล่าสุด: 2026-09-15 (เย็น) • ไฟล์นี้เป็น **as-built + spec** คู่กับ `SKILL2.md` (สัญญา DoD)
+> อัปเดตล่าสุด: 2026-09-16 • ไฟล์นี้เป็น **as-built + spec** คู่กับ `SKILL2.md` (สัญญา DoD)
+> รอบ 2026-09-16: บันทึกแผน Portable ที่อนุมัติแล้ว (ดู §15 ท้ายไฟล์) — เนื้อหา §1–§14 ยังเป็นของรอบ 2026-09-15 ไม่ rewrite
 
 ---
 
@@ -358,4 +359,12 @@ Topbar: ปุ่มย่อ sidebar + search (ส่ง ?q= ไป /track) + b
 - `src/lib/prisma.ts`, `src/lib/constants.ts`, `src/lib/auth.ts`, `src/lib/ticket-service.ts`, `src/lib/api-helpers.ts`, `src/proxy.ts` (ex-`middleware.ts`), `src/lib/store.ts` (deprecated re-export)
 - `src/app/api/*` (13 routes), `src/components/StatusBadge.tsx` (10 สี), `src/components/AppShell.tsx`, `src/app/*` (login/page/new-ticket/my-tickets/track/technician/admin/assets — ย้ายเป็น fetch)
 - `package.json` (+`tsx`, `db:seed`, `db:reset`, `prisma.seed`)
+
+---
+
+## 15. Addendum 2026-09-16 — แผน Portable (อนุมัติแล้ว ยังไม่ implement)
+
+- มติผู้ร้องขอ: รันได้ทุกเครื่อง ห้าม hardcode credential; Postgres เป็น system of record ทั้งหมด (ไม่ใช่แค่ log); เว็บบน Vercel (prod) หรือ domain service ใดๆ (`build` + `start -p $PORT`, `NODE_ENV=production`); DB ได้ทุกแบบ (Docker/native/Neon/on-prem) ผ่าน env เท่านั้น
+- `.env.example` กลับมา tracked แล้ว (commit `51a45cc`); `.env`/`.env.local` ยัง ignored; แผนต่อ: `.env.example` ใส่ default local (`change-me-*`) + `setup.ps1`/`check.ps1` + `PORT` override + docs 3 ทาง + domain service
+- กฎห้าม hardcode ยังคงเดิม (SKILL2 § Known Gaps ข้อ 9); test แผนอยู่ `ACCEPTANCE_CHECKLIST.md` ข้อ 30–37 (ยังไม่รัน); สถานะสั้นๆ ดู `KB_web.md` (root)
 

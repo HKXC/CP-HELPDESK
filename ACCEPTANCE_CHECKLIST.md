@@ -9,6 +9,7 @@
 
 **วันที่ทดสอบ:** 2026-09-15
 **ทดสอบโดย:** opencode (API-only — ข้อ UI เหลือว่างไว้รอผู้ใช้คลิกจริง)
+**แผนเพิ่ม:** 2026-09-16 — ส่วนที่ 5 (ข้อ 30–37, Portable/Vercel/Domain) เป็นแผนที่อนุมัติแล้ว ยังไม่ implement/ยังไม่ทดสอบ
 
 ## ส่วนที่ 1 — Flow หลักของ Requester
 
@@ -59,6 +60,25 @@
 | 28 | ~~ดับเบิลคลิก `run-4502.bat` โดยไม่ต้อง login~~ → ~~เปิด `/terminal` (ADMIN) ดู health/overview/logs~~ | N/A — ยกเลิก .bat 2026-09-14; `/terminal` เอาออกทั้งหน้า+เมนู 2026-09-15 ตามคำสั่งผู้ใช้ (ดูข้อมูลผ่าน `/admin` แทน) |
 | 29 | ~~ปิด PostgreSQL ก่อนรัน `.bat`~~ → ปิด DB แล้วเปิดเว็บ/`/api/health` | N/A — ยกเลิก .bat 2026-09-14 | เทส fail-loud ผ่าน Docker/health แทน |
 
+## ส่วนที่ 5 — แผน Portable / รันเครื่องอื่น + Vercel/Domain (อนุมัติ 2026-09-16 — ยังไม่ทดสอบ)
+
+> ที่มา: ผู้ร้องขอ 2026-09-16 — "รันเครื่องอื่นได้ ห้าม hardcode credential; Postgres เป็นที่เก็บข้อมูล (system of record) ตัวเว็บวิ่งบน Vercel หรือ domain service; เอา setup script (.ps1); `.env.example` มี default แก้ได้"
+> วิธีตรวจ: รันจริงบนเครื่องใหม่/DB ปลายทางตามแถว ไม่เดาจากโค้ด; secret จริงห้ามปรากฏใน repo/log/จอ
+
+| # | สถานการณ์ทดสอบ | ผลที่ควรเกิด | ผลจริง | หมายเหตุ/อาการ (ถ้าไม่ผ่าน) |
+|---|---|---|---|---|
+| 30 | Clone ใหม่ → `setup.ps1 -Db docker` → เปิด `/login` | `GET /api/health` → `ok/connected`; login 3 roles ได้ | | ต้องมี Node 22 + Docker; `.env` สร้างจาก `.env.example` อัตโนมัติถ้ายังไม่มี |
+| 31 | Clone ใหม่ → native Postgres (ข้าม Docker) | `migrate deploy` + `seed` ผ่าน ไม่ต้องแก้โค้ด | | ใช้ `DATABASE_URL`/`DIRECT_URL` ชี้ native (local ใส่ค่าเดียวกันทั้งคู่) |
+| 32 | ชี้ DB ไป Neon/managed → เว็บบน Vercel | อ่าน/เขียน ticket/asset/ไฟล์แนบได้จริง | | `DATABASE_URL`=pooled `:6543`, `DIRECT_URL`=direct `:5432`; migrate+seed จากเครื่อง local; `BLOB_READ_WRITE_TOKEN` ตั้งบน Vercel |
+| 33 | เว็บบน domain service (`npm run build` + `start -p $PORT` หลัง reverse proxy) | เปิดผ่าน domain ได้; session cookie ทำงาน | | `NODE_ENV=production` (cookie `secure`); `PORT` override ได้เมื่อ 4502 ชน |
+| 34 | `.env.example` ก๊อปแล้วรัน local ได้ | แก้เฉพาะรหัส demo แล้วรันผ่าน | | ใน repo มีแค่ค่า demo (`change-me-*`) ห้ามมี URL/token จริงของ Neon/Vercel |
+| 35 | grep ทั้ง repo หา credential จริง | ไม่เจอ connection string/token/รหัสจริง | | เจอได้แค่ demo (`change-me-*`, `*@jp.local`, ชื่อฟิลด์ `password`) |
+| 36 | เช็ค `.env`/`uploads/`/`logs/` ไม่หลุดขึ้น git | `git status --ignored` ขึ้น `!!` ครบ; `git ls-files` ไม่มี secret | | `.env.example` ต้อง tracked (`??`→`A`), `.env`/`.env.local` ต้อง ignored |
+| 37 | พอร์ต 4502 ชน → ตั้ง `PORT` ใหม่ | รันบนพอร์ตใหม่ได้ ไม่ต้องแก้โค้ด | | `dev:4502` คงไว้กันเปลี่ยน behavior; ทาง domain ใช้ `$PORT` |
+| 38 | ทำ bundle offline (`make-bundle.ps1`) แล้วตรวจไม่มี secret | bundle มี `.env.example` ไม่มี `.env`/`.env.local`, manifest ตรง HEAD | ✅ ผ่าน | รันจริง 2026-09-16: 70 tracked + node_modules ~30k files, secret-check ผ่าน, ข้าม `CLAUDE.md` ที่ลบแบบยังไม่ commit พร้อม warning |
+| 39 | เอา bundle ไปเครื่อง offline (ไม่มีเน็ต) + รัน `setup.ps1` | `migrate deploy` + `seed` ผ่านโดยไม่ใช้เน็ต, `/api/health` ok | | ต้องให้ผู้ใช้ลองบนเครื่อง offline จริง (มี `README-OFFLINE.txt` ใน bundle) |
+| 40 | รัน `setup.ps1` ซ้ำบนเครื่องเดิม (idempotent) | ไม่เขียน `.env` ทับ, migrate no-op, ไม่พัง | ✅ ผ่าน | รันจริง 2026-09-16 ด้วย `-SkipSeed`: Node/DB ผ่าน, `No pending migrations`, จบครบ |
+
 ---
 
 ## สรุปผลรวม (กรอกหลังทดสอบครบ)
@@ -68,6 +88,8 @@
 - จำนวนข้อที่ใช้ได้บางส่วน: 0
 - เหลือรอคลิก UI ด้วยตา (4 ข้อ): 23 (mobile), 24 (noscript/loading), 26–27 (design/animation)
 - จำนวนข้อ N/A: 4 (21,22,28,29)
+- แผนรอบ 2026-09-16 (ยังไม่ทดสอบ, ไม่นับในผลรวม): ข้อ 30–37 (8 ข้อ — Portable Docker/native/Neon + Vercel/domain + `.env.example` default + no-hardcode grep + gitignored + `PORT`)
+- รอบ offline 2026-09-16: ข้อ 38 ✅ / 40 ✅ (รันจริงบนเครื่องนี้), ข้อ 39 รอเครื่อง offline จริง
 - re-verify เย็น 2026-09-15 (API): login 3 roles 200 + รหัสผิด 401 + USER เปิด `/api/users` 403 ตรงครบ, login ผ่าน LAN IP (`10.195.255.147:4502`) 200, `tsc` + `npm run build` ผ่าน 27 routes ไม่มี warning (แก้ `storage.ts` แล้ว)
 - หมายเหตุ: มี test data ค้างใน DB local เพิ่มจากรอบเช้า — ticket `HD-26-0023` (`smoke-beep-test`, TRIAGED) + ไฟล์แนบ `smoke.txt`/`fresh.txt` (ลบได้); ข้อ UI 23,24,26,27 ยังรอคลิกเหมือนเดิม
 

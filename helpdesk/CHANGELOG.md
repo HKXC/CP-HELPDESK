@@ -1,5 +1,36 @@
 # CHANGELOG — CP Helpdesk
 
+## 2026-09-20 — แยกข้อความ login 400 ตามช่องที่ว่าง + พิสูจน์ login ได้จริง
+
+- `src/app/api/auth/login/route.ts`: แยก 400 เป็น 3 เคส (ว่างคู่/ว่างอีเมล/ว่างรหัส — เคสว่างรหัสยังบอกที่มา `.env SEED_*_PASSWORD`) เพื่อวินิจฉัยได้ว่าผู้ใช้ติดช่องไหน
+- Verify: `POST {}` → 400 ข้อความใหม่; `POST` ด้วยรหัสจริงจาก `.env` (อ่านในหน่วยความจำ ไม่พิมพ์ค่า) → **200 role=ADMIN** พิสูจน์ว่าระบบ login ครบวงจรปกติ ปัญหาที่เหลือคือผู้ใช้กดส่งทั้งที่ช่องว่าง
+
+## 2026-09-20 — กัน hydration error จาก browser extension
+
+- `src/app/layout.tsx`: เติม `suppressHydrationWarning` ที่ `<html>` (วิธีมาตรฐานตาม Next.js docs สำหรับ attribute ที่ extension ยัดเข้ามา)
+- สาเหตุ: extension เบราว์เซอร์ (มีคำว่า mel) ใส่ `data-mel-shadow-open="1"` ใน `<html>` ก่อน React โหลด — โค้ดเราไม่มี attribute นี้ (ยืนยันจาก code frame + dev log) error นี้ไม่กระทบ login เป็นแค่ dev overlay
+- Verify: `tsc` exit 0, `GET /login` 200
+
+## 2026-09-20 — ข้อความ login 400 บอกที่มาของรหัส
+
+- `src/app/api/auth/login/route.ts`: เคสไม่กรอกอีเมล/รหัส (400) เปลี่ยนข้อความเป็นไทยพร้อมบอกที่มา `"... (รหัสบัญชีทดสอบดูในไฟล์ helpdesk/.env บรรทัด SEED_*_PASSWORD)"` — ไม่เปิดค่า secret ใดๆ (ที่มา: ผู้ใช้เจอ `Email and password required` เพราะกดปุ่มลัดแล้วกดเข้าสู่ระบบโดยไม่พิมพ์รหัส)
+- Verify: `POST /api/auth/login {}` → 400 + error ข้อความใหม่จริง
+
+## 2026-09-20 — ปุ่มตา show/hide รหัสผ่านหน้า login
+
+- `src/app/login/page.tsx`: เพิ่ม toggle แสดง/ซ่อนรหัสผ่าน (icon `Eye`/`EyeOff` จาก lucide-react ที่มีอยู่แล้ว, `aria-label` + `aria-pressed`, ปุ่ม `type="button"` กัน submit ฟอร์ม) — แก้ปัญหาผู้ใช้มองไม่เห็นรหัสที่พิมพ์; ปุ่มลัด role ยังกรอกแค่อีเมลเหมือนเดิม (ต้องพิมพ์รหัสจาก `.env` เอง)
+- Verify: `tsc --noEmit` exit 0, `GET /login` 200 (compile ผ่านบน dev server); **ยังไม่ได้ verify ด้วยตาจริง — ให้ผู้ใช้กดปุ่มตาดูเอง**
+
+## 2026-09-16 — Offline bundle + setup.ps1 (รันเครื่องไม่มีเน็ตได้)
+
+- ใหม่ `setup.ps1` (repo root): ตรวจ Node 22 → ตรวจ Postgres `:5432` → สร้าง `.env` จาก example (ไม่เขียนทับของเดิม) → ตรวจชื่อ env ครบโดยไม่พิมพ์ค่า → `migrate deploy` → `db seed` (ข้ามได้ด้วย `-SkipSeed`) → `-Start` รัน detached + poll `/api/health`
+- ใหม่ `make-bundle.ps1`: ห่อ tracked files (worktree) + `node_modules` (มี Prisma engines แล้ว) + manifest + `README-OFFLINE.txt` ลง USB; ไม่ห่อ `.env`/`.env.local` เด็ดขาด (secret-check fail-loud); ข้ามไฟล์ที่ลบแบบยังไม่ commit พร้อม warning; ห่อสคริปต์ตัวเองเพิ่มเพราะยัง untracked; มี `-SkipNodeModules` สำหรับ finalize เร็ว
+- `.env.example`: ใส่ default local (`change-me-*`, `PORT=4502` ให้ `setup.ps1 -Start`) ก๊อปแล้วรันได้เลย (แก้รหัสบนเครื่องแชร์)
+- ลบ `helpdesk/CLAUDE.md` (pointer `@AGENTS.md` 11 bytes — ผู้ใช้ยืนยันไม่ใช้ Claude ใช้แค่ model ฟรี; แอปไม่เคย import)
+- กฎใหม่: สคริปต์ `.ps1` ต้อง ASCII-only (บทเรียนรอบนี้: ไฟล์ UTF-8 ไม่มี BOM + PS 5.1 อ่านเป็น ANSI ทำให้ em-dash กลายเป็น `"` ปิด string ผิดที่ — parser ชี้ไลน์มั่ว, รันจริงถึงเจอ; แก้เป็น `--` หมดแล้ว)
+- Verify: parse 0 errors ทั้ง 2 ไฟล์; `setup.ps1 -SkipSeed` ผ่านจริง (migrate no-op); `make-bundle.ps1` รันจริงได้ bundle (70 tracked + node_modules ~30k files/855MB, secret-check ผ่าน); ACCEPTANCE #38/#40 ✅, #39 รอเครื่อง offline จริง
+- ไฟล์เปลี่ยนรอบนี้: `setup.ps1`+`make-bundle.ps1` (ใหม่), `helpdesk/.env.example`, `README.md` (root), `ACCEPTANCE_CHECKLIST.md`, `helpdesk/CHANGELOG.md` (+งานก่อนหน้า: ลบ `CLAUDE.md`)
+
 ## 2026-09-15 (ดึก) — เอาฟีเจอร์ Terminal ออก + ฟอนต์ไทย
 
 - ลบ `/terminal` ทั้งหน้า+เมนูตามคำสั่งผู้ใช้: ลบ `src/app/terminal/` (608 บรรทัด) + ตัด `Terminal` icon/nav/active-case ใน `src/components/AppShell.tsx`; API `health/overview/tickets/logs` คงอยู่ครบ (หน้า `/admin` ใช้อยู่)

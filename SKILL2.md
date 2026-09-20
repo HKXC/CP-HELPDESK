@@ -459,6 +459,7 @@ An implementation review found the current application diverges from this specif
 ### Deferred — must resolve before Phase 2 cutover
 
 9. **PostgreSQL hosting target** — not yet decided. Do not hard-code a host, port, or credential anywhere in application code or committed config. All connection details (host, port, database name, credentials, SSL mode) must be read from environment variables (e.g., a single `DATABASE_URL`) with no default that points at a real environment, so the eventual choice — local Docker, a managed provider, or an existing on-prem instance — is a configuration change, not a code change. Connection pooling limits, backup/retention policy, and secrets management still depend on this choice and must be revisited once it is made; record the final decision here once set.
+   - **UPDATE 2026-09-16 — requester decision (portable, not a spec change):** support ALL targets — local Docker (`docker-compose.yml` Postgres 17) / native Postgres / managed (Neon: `DATABASE_URL`=pooled `:6543`, `DIRECT_URL`=direct `:5432`; local ใส่ค่าเดียวกันทั้งคู่) / on-prem. Web runs on Vercel (prod) or any domain service (`npm run build` + `start -p $PORT` behind reverse proxy, `NODE_ENV=production`). Postgres is the system of record for ALL entities (not log-only). No hard-coded host/port/credential/token in code or committed config — everything via env (`.env` untracked, `.env.example` tracked with local demo defaults only). Fresh-machine setup via `setup.ps1` (+ `check.ps1`); acceptance items 30–37 in `ACCEPTANCE_CHECKLIST.md` (ยังไม่ทดสอบ). The no-hardcode rule above still applies unchanged.
 
 ## Scope (Locked Baseline)
 
@@ -481,7 +482,7 @@ An implementation review found the current application diverges from this specif
 - Supervisor role แยกต่างหาก — ปิดประเด็นนี้แล้ว (RESOLVED ตาม § Known Gaps ข้อ 1)
 - การเชื่อมต่อระบบภายนอก เช่น Active Directory/SSO, ระบบแจ้งเตือนอัตโนมัติผ่าน LINE/Email/SMS — ไม่มีการระบุไว้ในสเปกนี้
 - Native mobile application — มีเฉพาะ responsive web ตาม § Accessibility and Responsive Behavior
-- การเลือก PostgreSQL hosting (local/cloud/on-prem) — ยังไม่ตัดสินใจ ตาม § Known Gaps ข้อ 6
+- การเลือก PostgreSQL hosting (local/cloud/on-prem) — ยังไม่ตัดสินใจ ตาม § Known Gaps ข้อ 6 (อัปเดต 2026-09-16: ผู้ร้องขอให้รองรับทุกแบบ — ดู decision note ท้าย § Known Gaps ข้อ 9; กฎห้าม hardcode ยังคงเดิม)
 - Multi-language (i18n) นอกเหนือจากภาษาที่แอปใช้งานอยู่ปัจจุบัน — ไม่มีการระบุไว้ในสเปกนี้
 - SLA auto-escalation ตามเวลา (นอกเหนือจากการแสดง due date) — สเปกระบุแค่การแสดงผล ไม่ได้ระบุว่าต้อง escalate อัตโนมัติ
 
