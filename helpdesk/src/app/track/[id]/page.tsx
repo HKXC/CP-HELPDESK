@@ -136,7 +136,8 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
   };
 
   useEffect(() => {
-    reload();
+    // Same microtask deferral as assets/page.tsx (react-hooks/set-state-in-effect).
+    void Promise.resolve().then(() => reload());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 

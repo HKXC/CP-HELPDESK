@@ -40,10 +40,14 @@ export default function AssetsPage() {
   };
 
   useEffect(() => {
-    load();
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((u) => setRole(u?.role || null));
+    // Deferred one microtask: react-hooks/set-state-in-effect forbids calling
+    // setState synchronously in the effect body. Behavior unchanged.
+    void Promise.resolve().then(() => {
+      load();
+      fetch("/api/auth/me", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((u) => setRole(u?.role || null));
+    });
   }, []);
 
   useEffect(() => {

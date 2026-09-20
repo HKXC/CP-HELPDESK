@@ -68,6 +68,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return att;
     });
 
+    // Strip the internal storage reference before responding (never expose raw paths).
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { storage_path: _storage_path, ...publicRow } = row;
 
     return NextResponse.json(publicRow, { status: 201 });

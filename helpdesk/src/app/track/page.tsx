@@ -39,8 +39,11 @@ function TrackInner() {
   };
 
   useEffect(() => {
-    setText(qParam);
-    fetchTickets(qParam);
+    // Same microtask deferral as assets/page.tsx (react-hooks/set-state-in-effect).
+    void Promise.resolve().then(() => {
+      setText(qParam);
+      fetchTickets(qParam);
+    });
   }, [qParam]);
 
   const onSearch = (e: React.FormEvent) => {

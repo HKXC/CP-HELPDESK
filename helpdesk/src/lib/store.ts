@@ -1,5 +1,6 @@
 // Deprecated — kept for backward compat, re-exports new constants
 // All data now lives in PostgreSQL via Prisma + API routes
+/* eslint-disable @typescript-eslint/no-unused-vars -- deprecated compat shims keep unused params on purpose */
 export { STATUS_LABEL, STATUS_ORDER, PRIORITY_LABEL, ROLE_LABEL } from "./constants";
 export type { TicketStatus, Priority, Role } from "./constants";
 

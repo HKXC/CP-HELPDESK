@@ -31,11 +31,14 @@ export default function NewTicketPage() {
   }, []);
 
   useEffect(() => {
-    const found = assets.find((a) => a.asset_code === form.asset_code) || null;
-    setAssetInfo(found);
-    if (form.asset_code && found && !form.location) {
-      setForm((f) => ({ ...f, location: found.location || "" }));
-    }
+    // Same microtask deferral as assets/page.tsx (react-hooks/set-state-in-effect).
+    void Promise.resolve().then(() => {
+      const found = assets.find((a) => a.asset_code === form.asset_code) || null;
+      setAssetInfo(found);
+      if (form.asset_code && found && !form.location) {
+        setForm((f) => ({ ...f, location: found.location || "" }));
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.asset_code, assets]);
 

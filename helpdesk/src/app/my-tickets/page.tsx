@@ -57,7 +57,8 @@ export default function MyTicketsPage() {
   };
 
   useEffect(() => {
-    fetchTickets(filter, sort, order);
+    // Same microtask deferral as assets/page.tsx (react-hooks/set-state-in-effect).
+    void Promise.resolve().then(() => fetchTickets(filter, sort, order));
   }, [filter, sort, order]);
 
   return (

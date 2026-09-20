@@ -1,5 +1,13 @@
 # CHANGELOG — CP Helpdesk
 
+## 2026-09-20 — แก้ lint errors 5 จุด (เตรียม deploy Vercel)
+
+- `react-hooks/set-state-in-effect` 5 จุด (assets/my-tickets/new-ticket/track/track-[id]): fetch ใน effect เลื่อนออกไป 1 microtask (`void Promise.resolve().then(...)`) พฤติกรรมเดิมทุกประการ — จากเดิม `npm run lint` fail
+- ลบตัวแปร dead (`finalTicket` + `updated` ×2 ใน `api/tickets/[id]`) ที่ response ใช้ `full` อยู่แล้ว; `attachments` ใส่ disable-comment ตรงจุด strip `storage_path` (ตั้งใจซ่อน path); `store.ts` ปิด rule ทั้งไฟล์ (deprecated shims)
+- เหลือ warning เดียวที่ตั้งใจเว้น: `layout.tsx` Google Fonts ควรย้ายไป `next/font` (เปลี่ยนพฤติกรรมโหลดฟอนต์ — แยกเป็นงานเฉพาะ ไม่รวมรอบนี้)
+- หมายเหตุ: `npx eslint` แบบไม่ระบุ path ค้าง (process idle) บนเครื่องนี้ — ใช้ `eslint src prisma` แทน; `npm run build` ผ่าน 26 routes exit 0 ตั้งแต่ก่อนแก้
+- Verify: eslint 0 errors/1 warning, `tsc` exit 0, dev smoke `/login` 200 + `/my-tickets|/track|/assets|/new-ticket` 307 (auth redirect = compile+gate ปกติ); `/track/[id]` ไม่ได้เปิด (ต้องมี id จริง — pattern เดียวกับที่ verify แล้ว + type/lint ผ่าน)
+
 ## 2026-09-20 — แยกข้อความ login 400 ตามช่องที่ว่าง + พิสูจน์ login ได้จริง
 
 - `src/app/api/auth/login/route.ts`: แยก 400 เป็น 3 เคส (ว่างคู่/ว่างอีเมล/ว่างรหัส — เคสว่างรหัสยังบอกที่มา `.env SEED_*_PASSWORD`) เพื่อวินิจฉัยได้ว่าผู้ใช้ติดช่องไหน

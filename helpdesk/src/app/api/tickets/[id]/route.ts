@@ -99,7 +99,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         );
       }
       try {
-        const updated = await transitionTicket({
+        await transitionTicket({
           ticket_id: id,
           new_status: body.status as TicketStatus,
           actor_id: session.id,
@@ -115,9 +115,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         if (body.resolution !== undefined) extraFields.resolution = body.resolution;
         if (body.solution !== undefined) extraFields.solution = body.solution;
 
-        let finalTicket = updated;
         if (Object.keys(extraFields).length > 0) {
-          finalTicket = await updateTicket(id, extraFields as never, session.id);
+          await updateTicket(id, extraFields as never, session.id);
         }
 
         const full = await prisma.ticket.findUnique({
@@ -195,7 +194,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: "No fields to update" }, { status: 400 });
     }
 
-    const updated = await updateTicket(id, updateData as never, session.id);
+    await updateTicket(id, updateData as never, session.id);
 
     const full = await prisma.ticket.findUnique({
       where: { id },
