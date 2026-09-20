@@ -7,6 +7,7 @@
 - เหลือ warning เดียวที่ตั้งใจเว้น: `layout.tsx` Google Fonts ควรย้ายไป `next/font` (เปลี่ยนพฤติกรรมโหลดฟอนต์ — แยกเป็นงานเฉพาะ ไม่รวมรอบนี้)
 - หมายเหตุ: `npx eslint` แบบไม่ระบุ path ค้าง (process idle) บนเครื่องนี้ — ใช้ `eslint src prisma` แทน; `npm run build` ผ่าน 26 routes exit 0 ตั้งแต่ก่อนแก้
 - Verify: eslint 0 errors/1 warning, `tsc` exit 0, dev smoke `/login` 200 + `/my-tickets|/track|/assets|/new-ticket` 307 (auth redirect = compile+gate ปกติ); `/track/[id]` ไม่ได้เปิด (ต้องมี id จริง — pattern เดียวกับที่ verify แล้ว + type/lint ผ่าน)
+- Deploy: push `424c995` → Vercel auto-deploy **Ready Production** (`dpl_ANsaXnBZgei87a3PRJZT4DeAQ9pZ`, alias `cp-helpdesk.vercel.app`) — build บน Vercel ผ่าน แต่ prod ยังใช้ไม่ได้: env ว่าง (`DATABASE_URL`/`DIRECT_URL`/`BLOB_READ_WRITE_TOKEN` — `vercel env ls` ยืนยัน), Deployment Protection เปิดอยู่ (SSO wall: `/login` โดนส่งไป `vercel.com/login?...sso-api...`), alias `/login` เจอ 404 ชั่วคราว (คาดว่า propagation/protection — เช็คซ้ำหลังปิด wall); `/api/health` บน prod timeout (ไม่มี DB ให้ต่อ) — ทั้งหมดรอ secret + dashboard จากผู้ใช้ตาม `DEPLOY_VERCEL.md`
 
 ## 2026-09-20 — แยกข้อความ login 400 ตามช่องที่ว่าง + พิสูจน์ login ได้จริง
 
